@@ -65,8 +65,6 @@ namespace Quarrel.ViewModels.Services.Voice
                             if (m.VoiceState.UserId == _discordService.CurrentUser.Id)
                             {
                                 DisconnectFromVoiceChannel();
-                                CurrentVoiceChanel = null;
-                                Messenger.Default.Send(new VoiceChannelConnectedMessage(CurrentVoiceChanel));
                             }
                             else
                             {
@@ -77,16 +75,6 @@ namespace Quarrel.ViewModels.Services.Voice
                         {
                             VoiceStates[m.VoiceState.UserId].Model = m.VoiceState;
                             VoiceStates[m.VoiceState.UserId].UpateProperties();
-
-                            if (m.VoiceState.UserId == _discordService.CurrentUser.Id)
-                            {
-                                if (CurrentVoiceChanel == null ||
-                                    CurrentVoiceChanel.Model.Id == m.VoiceState.ChannelId)
-                                {
-                                    CurrentVoiceChanel = _channelsService.GetChannel(m.VoiceState.ChannelId);
-                                    Messenger.Default.Send(new VoiceChannelConnectedMessage(CurrentVoiceChanel));
-                                }
-                            }
                         }
                     }
                     else
@@ -99,6 +87,12 @@ namespace Quarrel.ViewModels.Services.Voice
                     {
                         var channel = SimpleIoc.Default.GetInstance<IChannelsService>().GetChannel(m.VoiceState.ChannelId);
                         channel.ConnectedUsers.Add(m.VoiceState.UserId, VoiceStates[m.VoiceState.UserId]);
+                    }
+
+                    if (m.VoiceState.UserId == _discordService.CurrentUser.Id)
+                    {
+                        CurrentVoiceChanel = _channelsService.GetChannel(m.VoiceState.ChannelId);
+                        Messenger.Default.Send(new VoiceChannelConnectedMessage(CurrentVoiceChanel));
                     }
                 });
             });
