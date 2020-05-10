@@ -22,6 +22,7 @@ using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Gateway;
 using Quarrel.ViewModels.Services.Navigation;
 using Quarrel.ViewModels.Services.Settings;
+using Quarrel.ViewModels.Services.Voice;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -46,12 +47,12 @@ namespace Quarrel.ViewModels
         private readonly IPresenceService _presenceService;
         private readonly ISettingsService _settingsService;
         private readonly ISubFrameNavigationService _subFrameNavigationService;
+        private readonly IVoiceService _voiceService;
         private RelayCommand openAbout;
         private RelayCommand openCredit;
         private RelayCommand openSettings;
         private RelayCommand openWhatsNew;
         private RelayCommand disconnectVoiceCommand;
-        private VoiceState voiceState = new VoiceState();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MainViewModel"/> class.
@@ -69,6 +70,7 @@ namespace Quarrel.ViewModels
         /// <param name="friendsService">The app's friends service.</param>
         /// <param name="dispatcherHelper">The app's dispatcher helper.</param>
         /// <param name="clipboardService">The app's clipboard service.</param>
+        /// <param name="voiceService">The app's voice service.</param>
         /// <remarks>Takes all service parameters from ViewModel Locator.</remarks>
         public MainViewModel(
             IAnalyticsService analyticsService,
@@ -83,7 +85,8 @@ namespace Quarrel.ViewModels
             ISubFrameNavigationService subFrameNavigationService,
             IFriendsService friendsService,
             IDispatcherHelper dispatcherHelper,
-            IClipboardService clipboardService)
+            IClipboardService clipboardService,
+            IVoiceService voiceService)
         {
             _analyticsService = analyticsService;
             _cacheService = cacheService;
@@ -93,18 +96,19 @@ namespace Quarrel.ViewModels
             _channelsService = channelsService;
             _friendsService = friendsService;
             _presenceService = presenceService;
-
             _gatewayService = gatewayService;
             _guildsService = guildsService;
             _subFrameNavigationService = subFrameNavigationService;
             _dispatcherHelper = dispatcherHelper;
             _clipboardService = clipboardService;
+            _voiceService = voiceService;
 
             RegisterGenericMessages();
             RegisterChannelsMessages();
             RegisterGuildsMessages();
             RegisterMembersMessages();
             RegisterMessagesMessages();
+            RegisterVoiceMessages();
         }
 
         /// <summary>
@@ -287,12 +291,6 @@ namespace Quarrel.ViewModels
             {
                 await _discordService.Login(token);
             }
-        }
-
-        public VoiceState VoiceState
-        {
-            get => voiceState;
-            set => Set(ref voiceState, value);
         }
 
         [NotNull]

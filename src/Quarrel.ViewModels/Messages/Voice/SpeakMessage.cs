@@ -5,7 +5,7 @@ using DiscordAPI.Voice.DownstreamEvents;
 namespace Quarrel.ViewModels.Messages.Voice
 {
     /// <summary>
-    /// A message that indicates a user has changed speaking status..
+    /// A message that indicates a user has changed speaking status.
     /// </summary>
     public sealed class SpeakMessage
     {

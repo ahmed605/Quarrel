@@ -14,6 +14,7 @@ using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Gateway;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Quarrel.ViewModels.Services.Voice
 {
@@ -64,6 +65,8 @@ namespace Quarrel.ViewModels.Services.Voice
                             if (m.VoiceState.UserId == _discordService.CurrentUser.Id)
                             {
                                 DisconnectFromVoiceChannel();
+                                CurrentVoiceChanel = null;
+                                Messenger.Default.Send(new VoiceChannelConnectedMessage(CurrentVoiceChanel));
                             }
                             else
                             {
@@ -74,6 +77,16 @@ namespace Quarrel.ViewModels.Services.Voice
                         {
                             VoiceStates[m.VoiceState.UserId].Model = m.VoiceState;
                             VoiceStates[m.VoiceState.UserId].UpateProperties();
+
+                            if (m.VoiceState.UserId == _discordService.CurrentUser.Id)
+                            {
+                                if (CurrentVoiceChanel == null ||
+                                    CurrentVoiceChanel.Model.Id == m.VoiceState.ChannelId)
+                                {
+                                    CurrentVoiceChanel = _channelsService.GetChannel(m.VoiceState.ChannelId);
+                                    Messenger.Default.Send(new VoiceChannelConnectedMessage(CurrentVoiceChanel));
+                                }
+                            }
                         }
                     }
                     else
@@ -121,6 +134,9 @@ namespace Quarrel.ViewModels.Services.Voice
         public IDictionary<string, BindableVoiceUser> VoiceStates { get; } = new ConcurrentDictionary<string, BindableVoiceUser>();
 
         /// <inheritdoc/>
+        public BindableChannel CurrentVoiceChanel { get; private set; }
+
+        /// <inheritdoc/>
         public async void ToggleDeafen()
         {
             var state = _voiceConnection._state;
@@ -146,14 +162,6 @@ namespace Quarrel.ViewModels.Services.Voice
         private void DisconnectFromVoiceChannel()
         {
             _webrtcManager.Destroy();
-        }
-
-        private void InputRecieved(object sender, float[] e)
-        {
-        }
-
-        private void VoiceDataRecieved(object sender, VoiceConnectionEventArgs<VoiceData> e)
-        {
         }
 
         private void Speak(object sender, VoiceConnectionEventArgs<Speak> e)

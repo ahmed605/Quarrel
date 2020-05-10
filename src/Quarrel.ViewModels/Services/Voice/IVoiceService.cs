@@ -16,6 +16,11 @@ namespace Quarrel.ViewModels.Services.Voice
         IDictionary<string, BindableVoiceUser> VoiceStates { get; }
 
         /// <summary>
+        /// Gets the currently connected voice channel.
+        /// </summary>
+        BindableChannel CurrentVoiceChanel { get; }
+
+        /// <summary>
         /// Toggles if the user is deafend.
         /// </summary>
         void ToggleDeafen();
