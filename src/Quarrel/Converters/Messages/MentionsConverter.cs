@@ -48,9 +48,9 @@ namespace Quarrel.Converters.Messages
         {
             IDictionary<string, string> dict = new Dictionary<string, string>();
 
-            foreach (var channel in ChannelsService.AllChannels)
+            foreach (var channel in GuildsService.CurrentGuild.Channels)
             {
-                dict[channel.Key] = channel.Value.Model.Name;
+                dict[channel.Model.Id] = channel.Model.Name;
             }
 
             if (channels != null)
