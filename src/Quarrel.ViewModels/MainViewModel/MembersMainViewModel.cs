@@ -223,7 +223,7 @@ namespace Quarrel.ViewModels
                                             {
                                                 IsOwner = op.Item.Member.User.Id == _guildsService.GetGuild(_currentGuild.Model.Id).Model.OwnerId,
                                             });
-                                            _presenceService.UpdateUserPrecense(op.Item.Member.User.Id, op.Item.Member.Presence);
+                                            _presenceService.AddOrUpdateUserPrecense(op.Item.Member.User.Id, op.Item.Member.Presence);
                                         }
                                     }
 
@@ -266,7 +266,7 @@ namespace Quarrel.ViewModels
                     IsOwner = item.Member.User.Id == _guildsService.GetGuild(_currentGuild.Model.Id).Model.OwnerId,
                 };
                 CurrentBindableMembers[index] = bGuildMember;
-                _presenceService.UpdateUserPrecense(item.Member.User.Id, item.Member.Presence);
+                _presenceService.AddOrUpdateUserPrecense(item.Member.User.Id, item.Member.Presence);
             }
         }
     }

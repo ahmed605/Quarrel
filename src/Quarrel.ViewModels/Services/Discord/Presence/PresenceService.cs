@@ -39,8 +39,9 @@ namespace Quarrel.ViewModels.Services.Discord.Presence
         }
 
         /// <inheritdoc/>
-        public void UpdateUserPrecense(string userId, DiscordAPI.Models.Presence presence)
+        public void AddOrUpdateUserPrecense(string userId, DiscordAPI.Models.Presence presence)
         {
+            _presences.AddOrUpdate(userId, presence);
             Messenger.Default.Send(new GatewayPresenceUpdatedMessage(userId, presence));
         }
     }

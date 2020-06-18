@@ -19,6 +19,6 @@ namespace Quarrel.ViewModels.Services.Discord.Presence
         /// </summary>
         /// <param name="userId">The user's id.</param>
         /// <param name="presence">The user's new presence.</param>
-        void UpdateUserPrecense(string userId, DiscordAPI.Models.Presence presence);
+        void AddOrUpdateUserPrecense(string userId, DiscordAPI.Models.Presence presence);
     }
 }

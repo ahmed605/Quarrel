@@ -35,7 +35,7 @@ namespace Quarrel.ViewModels.Services.Discord.CurrentUser
                 };
 
                 CurrentUserSettings = m.EventData.Settings;
-                _presenceService.UpdateUserPrecense(CurrentUser.Id, presence);
+                _presenceService.AddOrUpdateUserPrecense(CurrentUser.Id, presence);
             });
             Messenger.Default.Register<GatewayUserSettingsUpdatedMessage>(this, m =>
             {
@@ -47,7 +47,7 @@ namespace Quarrel.ViewModels.Services.Discord.CurrentUser
                     {
                         Status = m.Settings.Status,
                     };
-                    _presenceService.UpdateUserPrecense(CurrentUser.Id, newPresence);
+                    _presenceService.AddOrUpdateUserPrecense(CurrentUser.Id, newPresence);
                 }
             });
         }

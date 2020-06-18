@@ -24,7 +24,9 @@ using Quarrel.ViewModels.Services.Analytics;
 using Quarrel.ViewModels.Services.Cache;
 using Quarrel.ViewModels.Services.Discord.Channels;
 using Quarrel.ViewModels.Services.Discord.CurrentUser;
+using Quarrel.ViewModels.Services.Discord.Friends;
 using Quarrel.ViewModels.Services.Discord.Guilds;
+using Quarrel.ViewModels.Services.Discord.Presence;
 using Quarrel.ViewModels.ViewModels.Messages.Gateway;
 using System;
 using System.Collections.Generic;
@@ -42,7 +44,9 @@ namespace Quarrel.ViewModels.Services.Gateway
         private readonly ICacheService _cacheService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IChannelsService _channelsService;
+        private readonly IFriendsService _friendsService;
         private readonly IGuildsService _guildsService;
+        private readonly IPresenceService _presenceService;
         private readonly IServiceProvider _serviceProvider;
 
         private string previousGuildId;
@@ -55,6 +59,7 @@ namespace Quarrel.ViewModels.Services.Gateway
         /// <param name="channelsService">The app's current user service.</param>
         /// <param name="currentUserService">The app's channels service.</param>
         /// <param name="guildsService">The app's guilds service.</param>
+        /// <param name="presenceService">The app's presence service.</param>
         /// <param name="serviceProvider">The app's service provider.</param>
         public GatewayService(
             IAnalyticsService analyticsService,
@@ -62,13 +67,15 @@ namespace Quarrel.ViewModels.Services.Gateway
             IChannelsService channelsService,
             ICurrentUserService currentUserService,
             IGuildsService guildsService,
+            IPresenceService presenceService,
             IServiceProvider serviceProvider)
         {
             _analyticsService = analyticsService;
             _cacheService = cacheService;
-            _channelsService = channelsService;
+            _friendsService = channelsService;
             _currentUserService = currentUserService;
             _guildsService = guildsService;
+            _presenceService = presenceService;
             _serviceProvider = serviceProvider;
         }
 
@@ -203,7 +210,31 @@ namespace Quarrel.ViewModels.Services.Gateway
 
         private void Gateway_Ready(object sender, GatewayEventArgs<Ready> e)
         {
-            e.EventData.Cache();
+            foreach (var gSettings in e.EventData.GuildSettings)
+            {
+                _guildsService.AddOrUpdateGuildSettings(gSettings.GuildId, gSettings);
+
+                foreach (var cSettings in gSettings.ChannelOverrides)
+                {
+                    _channelsService.AddOrUpdateChannelSettings(cSettings.ChannelId, cSettings);
+                }
+            }
+
+            foreach (var presence in e.EventData.Presences)
+            {
+                _presenceService.AddOrUpdateUserPrecense(presence.User.Id, presence);
+            }
+
+            foreach (var note in e.EventData.Notes)
+            {
+                _cacheService.Runtime.SetValue(Constants.Cache.Keys.Note, note.Value, note.Key);
+            }
+
+            foreach (var friend in e.EventData.Friends)
+            {
+                _fr
+            }
+
             Messenger.Default.Send(new GatewayReadyMessage(e.EventData));
         }
 

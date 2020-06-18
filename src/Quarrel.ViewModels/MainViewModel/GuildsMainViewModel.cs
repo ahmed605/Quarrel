@@ -471,7 +471,7 @@ namespace Quarrel.ViewModels
                 {
                     foreach (var presence in m.GuildMembersChunk.Presences)
                     {
-                        _presenceService.UpdateUserPrecense(presence.User.Id, presence);
+                        _presenceService.AddOrUpdateUserPrecense(presence.User.Id, presence);
                     }
                 }
             });

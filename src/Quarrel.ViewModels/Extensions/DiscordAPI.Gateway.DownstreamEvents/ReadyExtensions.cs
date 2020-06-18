@@ -21,18 +21,6 @@ namespace DiscordAPI.Gateway.DownstreamEvents
     /// </summary>
     internal static class ReadyExtensions
     {
-        private static ICurrentUserService CurrentUsersService => SimpleIoc.Default.GetInstance<ICurrentUserService>();
-
-        private static IChannelsService ChannelsService => SimpleIoc.Default.GetInstance<IChannelsService>();
-
-        private static ICacheService CacheService => SimpleIoc.Default.GetInstance<ICacheService>();
-
-        private static IGuildsService GuildsService => SimpleIoc.Default.GetInstance<IGuildsService>();
-
-        private static IFriendsService FriendsService => SimpleIoc.Default.GetInstance<IFriendsService>();
-
-        private static IDiscordService DiscordService => SimpleIoc.Default.GetInstance<IDiscordService>();
-
         /// <summary>
         /// Stores all data from the <see cref="Ready"/> event.
         /// </summary>
