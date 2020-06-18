@@ -11,14 +11,5 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
     /// </summary>
     public interface IFriendsService
     {
-        /// <summary>
-        /// Gets a hashed collection of friends, by user id.
-        /// </summary>
-        ConcurrentDictionary<string, BindableFriend> Friends { get; }
-
-        /// <summary>
-        /// Gets a hashed collection of DM Members, by user id.
-        /// </summary>
-        IDictionary<string, BindableGuildMember> DMUsers { get; }
     }
 }

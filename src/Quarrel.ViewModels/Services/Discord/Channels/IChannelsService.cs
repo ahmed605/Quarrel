@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
-using Quarrel.ViewModels.Models.Bindables.Channels;
+using DiscordAPI.Models.Channels;
 
 namespace Quarrel.ViewModels.Services.Discord.Channels
 {
@@ -11,23 +11,18 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
     public interface IChannelsService
     {
         /// <summary>
-        /// Gets the currently open channel.
-        /// </summary>
-        BindableChannel CurrentChannel { get; }
-
-        /// <summary>
         /// Gets a channel by id.
         /// </summary>
         /// <param name="channelId">The id of the channel.</param>
-        /// <returns>The <see cref="BindableChannel"/> with id <paramref name="channelId"/>, or null.</returns>
-        BindableChannel GetChannel(string channelId);
+        /// <returns>The <see cref="Channel"/> with id <paramref name="channelId"/>, or null.</returns>
+        Channel GetChannel(string channelId);
 
         /// <summary>
         /// Adds or updates a channel in the channel list.
         /// </summary>
         /// <param name="channelId">The channel's id.</param>
-        /// <param name="channel">The <see cref="BindableChannel"/> object.</param>
-        void AddOrUpdateChannel(string channelId, BindableChannel channel);
+        /// <param name="channel">The <see cref="Channel"/> object.</param>
+        void AddOrUpdateChannel(string channelId, Channel channel);
 
         /// <summary>
         /// Removes a channel from the channel list.

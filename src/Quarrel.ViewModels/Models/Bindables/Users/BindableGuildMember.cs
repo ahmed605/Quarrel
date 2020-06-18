@@ -2,6 +2,7 @@
 
 using DiscordAPI.API.User.Models;
 using DiscordAPI.Models;
+using DiscordAPI.Models.Channels;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Ioc;
 using GalaSoft.MvvmLight.Messaging;
@@ -121,15 +122,12 @@ namespace Quarrel.ViewModels.Models.Bindables.Users
 
             var channel = await DiscordService.UserService.CreateDirectMessageChannelForCurrentUser(createDM);
 
-            BindableChannel bChannel;
-            bChannel = ChannelsService.GetChannel(channel.Id);
-            if (bChannel == null)
+            if (ChannelsService.GetChannel(channel.Id) == null)
             {
-                bChannel = new BindableChannel(channel);
-                ChannelsService.AddOrUpdateChannel(channel.Id, bChannel);
+                ChannelsService.AddOrUpdateChannel(channel.Id, channel);
             }
 
-            MessengerInstance.Send(new ChannelNavigateMessage(bChannel));
+            // TODO: Navigate to a channel
         });
 
         /// <summary>
@@ -193,7 +191,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Users
                         return null;
                     }
 
-                    _cachedRoles = GuildsService.GetGuild(GuildId).Model.Roles.Where(a => Model.Roles.Contains(a.Id)).OrderByDescending(x => x.Position).ToList();
+                    _cachedRoles = GuildsService.GetGuild(GuildId).Roles.Where(a => Model.Roles.Contains(a.Id)).OrderByDescending(x => x.Position).ToList();
                 }
 
                 return _cachedRoles;

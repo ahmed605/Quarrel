@@ -53,7 +53,7 @@ namespace DiscordAPI.Gateway.DownstreamEvents
             // Cache Presences
             foreach (var presence in ready.Presences)
             {
-                Messenger.Default.Send<GatewayPresenceUpdatedMessage>(new GatewayPresenceUpdatedMessage(presence.User.Id, presence));
+                Messenger.Default.Send(new GatewayPresenceUpdatedMessage(presence.User.Id, presence));
             }
 
             // Cache user notes

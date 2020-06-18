@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
-using Quarrel.ViewModels.Models.Bindables.Users;
 
 namespace Quarrel.ViewModels.Services.Discord.CurrentUser
 {
@@ -11,9 +10,9 @@ namespace Quarrel.ViewModels.Services.Discord.CurrentUser
     public interface ICurrentUserService
     {
         /// <summary>
-        /// Gets the current user as a <see cref="BindableUser"/>.
+        /// Gets the current user as a <see cref="User"/>.
         /// </summary>
-        BindableUser CurrentUser { get; }
+        User CurrentUser { get; }
 
         /// <summary>
         /// Gets the current user's discord settings.

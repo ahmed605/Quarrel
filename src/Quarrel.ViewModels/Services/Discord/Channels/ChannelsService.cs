@@ -1,13 +1,8 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
-using GalaSoft.MvvmLight.Ioc;
-using GalaSoft.MvvmLight.Messaging;
-using Quarrel.ViewModels.Messages.Gateway;
-using Quarrel.ViewModels.Messages.Navigation;
-using Quarrel.ViewModels.Models.Bindables.Channels;
-using Quarrel.ViewModels.Services.Analytics;
-using Quarrel.ViewModels.Services.DispatcherHelper;
+using DiscordAPI.Models.Channels;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Quarrel.ViewModels.Services.Discord.Channels
@@ -17,7 +12,8 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
     /// </summary>
     public class ChannelsService : IChannelsService
     {
-        private MainViewModel _mainViewModel = null;
+        private IDictionary<string, Channel> _allChannels = new ConcurrentDictionary<string, Channel>();
+        private IDictionary<string, ChannelOverride> _channelSettings = new ConcurrentDictionary<string, ChannelOverride>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelsService"/> class.
@@ -27,40 +23,31 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
         }
 
         /// <inheritdoc/>
-        public BindableChannel CurrentChannel
-        {
-            get => MainViewModel.CurrentChannel;
-            set => MainViewModel.CurrentChannel = value;
-        }
-
-        private MainViewModel MainViewModel => _mainViewModel ?? (_mainViewModel = SimpleIoc.Default.GetInstance<MainViewModel>());
-
-        /// <inheritdoc/>
-        public BindableChannel GetChannel(string channelId)
+        public Channel GetChannel(string channelId)
         {
             if (channelId == null)
             {
                 return null;
             }
 
-            return MainViewModel.AllChannels.TryGetValue(channelId, out BindableChannel channel) ? channel : null;
+            return _allChannels.TryGetValue(channelId, out Channel channel) ? channel : null;
         }
 
         /// <inheritdoc/>
-        public void AddOrUpdateChannel(string channelId, BindableChannel channel)
+        public void AddOrUpdateChannel(string channelId, Channel channel)
         {
             if (channelId == null)
             {
                 return;
             }
 
-            MainViewModel.AllChannels.AddOrUpdate(channelId, channel);
+            _allChannels.AddOrUpdate(channelId, channel);
         }
 
         /// <inheritdoc/>
         public void RemoveChannel(string channelId)
         {
-            MainViewModel.AllChannels.Remove(channelId);
+            _allChannels.Remove(channelId);
         }
 
         /// <inheritdoc/>
@@ -71,7 +58,7 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
                 return null;
             }
 
-            return MainViewModel.ChannelSettings.TryGetValue(channelId, out ChannelOverride channelOverride) ? channelOverride : null;
+            return _channelSettings.TryGetValue(channelId, out ChannelOverride channelOverride) ? channelOverride : null;
         }
 
         /// <inheritdoc/>
@@ -82,7 +69,7 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
                 return;
             }
 
-            MainViewModel.ChannelSettings.AddOrUpdate(channelId, channelOverride);
+            _channelSettings.AddOrUpdate(channelId, channelOverride);
         }
     }
 }

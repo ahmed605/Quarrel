@@ -1,11 +1,9 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
-using GalaSoft.MvvmLight.Ioc;
 using GalaSoft.MvvmLight.Messaging;
 using Quarrel.ViewModels.Messages.Gateway;
 using Quarrel.ViewModels.Models.Bindables.Users;
-using Quarrel.ViewModels.Services.DispatcherHelper;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -16,6 +14,10 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
     /// </summary>
     public class FriendsService : IFriendsService
     {
+        private IDictionary<string, Friend> _friends = new ConcurrentDictionary<string, Friend>();
+
+        private IDictionary<string, GuildMember> _dmUsers = new ConcurrentDictionary<string, GuildMember>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="FriendsService"/> class.
         /// </summary>
@@ -27,21 +29,13 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
                 {
                     foreach (var user in channel.Users)
                     {
-                        if (!DMUsers.ContainsKey(user.Id))
+                        if (!_dmUsers.ContainsKey(user.Id))
                         {
-                            DMUsers.Add(user.Id, new BindableGuildMember(new GuildMember() { User = user }, "DM"));
+                            _dmUsers.Add(user.Id, new GuildMember() { User = user });
                         }
                     }
                 }
             });
         }
-
-        /// <inheritdoc/>
-        public ConcurrentDictionary<string, BindableFriend> Friends { get; } =
-            new ConcurrentDictionary<string, BindableFriend>();
-
-        /// <inheritdoc/>
-        public IDictionary<string, BindableGuildMember> DMUsers { get; } =
-            new ConcurrentDictionary<string, BindableGuildMember>();
     }
 }

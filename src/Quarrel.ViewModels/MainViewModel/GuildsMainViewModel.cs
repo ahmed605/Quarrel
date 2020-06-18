@@ -259,11 +259,11 @@ namespace Quarrel.ViewModels
 
                         bGuild.Model.Channels = null;
 
-                        _guildsService.GuildUsers.AddOrUpdate(guild.Id, new ConcurrentDictionary<string, BindableGuildMember>());
+                        _guildsService._guildUsers.AddOrUpdate(guild.Id, new ConcurrentDictionary<string, BindableGuildMember>());
                         foreach (var user in guild.Members)
                         {
                             BindableGuildMember bgMember = new BindableGuildMember(user, guild.Id);
-                            _guildsService.GuildUsers[guild.Id].TryAdd(bgMember.Model.User.Id, bgMember);
+                            _guildsService._guildUsers[guild.Id].TryAdd(bgMember.Model.User.Id, bgMember);
                         }
 
                         // Guild Roles
@@ -461,7 +461,7 @@ namespace Quarrel.ViewModels
             });
             MessengerInstance.Register<GatewayGuildMembersChunkMessage>(this, m =>
             {
-                _guildsService.GuildUsers.TryGetValue(m.GuildMembersChunk.GuildId, out var guild);
+                _guildsService._guildUsers.TryGetValue(m.GuildMembersChunk.GuildId, out var guild);
                 foreach (var member in m.GuildMembersChunk.Members)
                 {
                     guild.TryAdd(member.User.Id, new BindableGuildMember(member, m.GuildMembersChunk.GuildId));
