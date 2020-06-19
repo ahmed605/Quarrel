@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
+using DiscordAPI.Models.Channels;
 using DiscordAPI.Models.Guilds;
 using System.Collections.Generic;
 
@@ -21,15 +22,27 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
         /// <summary>
         /// Adds or updates a guild in the guild list.
         /// </summary>
-        /// <param name="guildId">The id of the guild.</param>
         /// <param name="guild">The new guild value.</param>
-        void AddOrUpdateGuild(string guildId, Guild guild);
+        void AddOrUpdateGuild(Guild guild);
 
         /// <summary>
         /// Removes a guild from the guild list.
         /// </summary>
         /// <param name="guildId">The guild's id.</param>
         void RemoveGuild(string guildId);
+
+        /// <summary>
+        /// Adds or updates a <see cref="GuildChannel"/> in its guild.
+        /// </summary>
+        /// <param name="channel">The <see cref="GuildChannel"/>.</param>
+        void AddOrUpdateChannel(GuildChannel channel);
+
+        /// <summary>
+        /// Removes a <see cref="GuildChannel"/> from its guild.
+        /// </summary>
+        /// <param name="channelId">The <see cref="GuildChannel"/>'s id.</param>
+        /// <param name="guildId">The guild's id.</param>
+        void RemoveChannel(string channelId, string guildId);
 
         /// <summary>
         /// Gets the settings for a guild.
@@ -69,6 +82,13 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
         /// <param name="guildId">The guild id.</param>
         /// <returns>A hashed collection of guild members by user id.</returns>
         IReadOnlyDictionary<string, GuildMember> GetAndRequestGuildMembers(IEnumerable<string> memberIds, string guildId);
+
+        /// <summary>
+        /// Adds a <see cref="GuildMember"/> to the guild service.
+        /// </summary>
+        /// <param name="member">The <see cref="GuildMember"/>.</param>
+        /// <param name="guildId">The guild they belong to.</param>
+        void AddOrUpdateGuildMember(GuildMember member, string guildId);
 
         /// <summary>
         /// Quries a guild's members by <paramref name="query"/>.

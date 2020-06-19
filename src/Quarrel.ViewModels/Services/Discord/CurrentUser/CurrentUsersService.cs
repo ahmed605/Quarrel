@@ -53,9 +53,9 @@ namespace Quarrel.ViewModels.Services.Discord.CurrentUser
         }
 
         /// <inheritdoc/>
-        public User CurrentUser { get; private set; }
+        public User CurrentUser { get; set; }
 
         /// <inheritdoc/>
-        public UserSettings CurrentUserSettings { get; private set; } = new UserSettings();
+        public UserSettings CurrentUserSettings { get; set; } = new UserSettings();
     }
 }

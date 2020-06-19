@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
+using DiscordAPI.Models.Channels;
 using DiscordAPI.Models.Guilds;
 using GalaSoft.MvvmLight.Messaging;
 using Quarrel.ViewModels.Messages.Gateway.Voice;
@@ -45,15 +46,42 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
         }
 
         /// <inheritdoc/>
-        public void AddOrUpdateGuild(string guildId, Guild guild)
+        public void AddOrUpdateGuild(Guild guild)
         {
-            _allGuilds.AddOrUpdate(guildId, guild);
+            _allGuilds.AddOrUpdate(guild.Id, guild);
+            _guildUsers.Add(guild.Id, new ConcurrentDictionary<string, GuildMember>());
         }
 
         /// <inheritdoc/>
         public void RemoveGuild(string guildId)
         {
             _allGuilds.Remove(guildId);
+        }
+
+        /// <inheritdoc/>
+        public void AddOrUpdateChannel(GuildChannel channel)
+        {
+            Guild guild = _allGuilds[channel.GuildId];
+            int index = guild.Channels.IndexOf(x => x.Id == channel.Id);
+            if (index == -1)
+            {
+                guild.Channels.Add(channel);
+            } else
+            {
+                guild.Channels.RemoveAt(index);
+                guild.Channels.Add(channel);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void RemoveChannel(string channelId, string guildId)
+        {
+            Guild guild = _allGuilds[guildId];
+            int index = guild.Channels.IndexOf(x => x.Id == channelId);
+            if (index != -1)
+            {
+                guild.Channels.RemoveAt(index);
+            }
         }
 
         /// <inheritdoc/>
@@ -125,6 +153,12 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
             }
 
             return null;
+        }
+
+        /// <inheritdoc/>
+        public void AddOrUpdateGuildMember(GuildMember member, string guildId)
+        {
+            _guildUsers[guildId].AddOrUpdate(member.User.Id, member);
         }
 
         /// <inheritdoc/>

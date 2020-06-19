@@ -24,12 +24,6 @@ namespace Quarrel.ViewModels.Services.Discord.Rest
     public interface IDiscordService
     {
         /// <summary>
-        /// Gets or sets the current <see cref="User"/> instance, if present.
-        /// </summary>
-        [NotNull]
-        User CurrentUser { get; set; }
-
-        /// <summary>
         /// Gets the <see cref="IActivitiesService"/> instance to retrieve Activities page data.
         /// </summary>
         [NotNull]

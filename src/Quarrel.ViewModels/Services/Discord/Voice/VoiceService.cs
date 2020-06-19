@@ -3,21 +3,20 @@
 using DiscordAPI.Models;
 using DiscordAPI.Voice;
 using DiscordAPI.Voice.DownstreamEvents;
-using GalaSoft.MvvmLight.Ioc;
 using GalaSoft.MvvmLight.Messaging;
 using Quarrel.ViewModels.Messages.Gateway;
+using Quarrel.ViewModels.Messages.Services.Settings;
 using Quarrel.ViewModels.Messages.Voice;
-using Quarrel.ViewModels.Models.Bindables.Channels;
 using Quarrel.ViewModels.Services.Discord.Channels;
+using Quarrel.ViewModels.Services.Discord.CurrentUser;
 using Quarrel.ViewModels.Services.Discord.Rest;
 using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Gateway;
+using Quarrel.ViewModels.Services.Settings;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Quarrel.ViewModels.Messages.Services.Settings;
-using Quarrel.ViewModels.Services.Settings;
 
-namespace Quarrel.ViewModels.Services.Voice
+namespace Quarrel.ViewModels.Services.Discord.Voice
 {
     /// <summary>
     /// Manages all voice state data.
@@ -25,28 +24,33 @@ namespace Quarrel.ViewModels.Services.Voice
     public sealed class VoiceService : IVoiceService
     {
         private readonly IChannelsService _channelsService;
+        private readonly ICurrentUserService _currentUserService;
         private readonly IDiscordService _discordService;
         private readonly IDispatcherHelper _dispatcherHelper;
         private readonly IGatewayService _gatewayService;
         private readonly IWebrtcManager _webrtcManager;
         private VoiceConnection _voiceConnection;
+        private IDictionary<string, VoiceState> _voiceStates = new ConcurrentDictionary<string, VoiceState>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VoiceService"/> class.
         /// </summary>
         /// <param name="channelsService">The app's channel service.</param>
+        /// <param name="currentUserService">The app's current user service.</param>
         /// <param name="discordService">The app's discord service.</param>
         /// <param name="dispatcherHelper">The app's dispatcher helper.</param>
         /// <param name="gatewayService">The app's gateway service.</param>
         /// <param name="webrtcManager">The app's webrtc manager.</param>
         public VoiceService(
             IChannelsService channelsService,
+            ICurrentUserService currentUserService,
             IDiscordService discordService,
             IDispatcherHelper dispatcherHelper,
             IGatewayService gatewayService,
             IWebrtcManager webrtcManager)
         {
             _channelsService = channelsService;
+            _currentUserService = currentUserService;
             _discordService = discordService;
             _dispatcherHelper = dispatcherHelper;
             _gatewayService = gatewayService;
@@ -116,17 +120,13 @@ namespace Quarrel.ViewModels.Services.Voice
         }
 
         /// <inheritdoc/>
-        public IDictionary<string, VoiceState> VoiceStates { get; } = new ConcurrentDictionary<string, VoiceState>();
-
-        /// <inheritdoc/>
         public async void ToggleDeafen()
         {
             if (_voiceConnection != null)
             {
                 var state = _voiceConnection._state;
                 state.SelfDeaf = !state.SelfDeaf;
-                await _gatewayService.Gateway.VoiceStatusUpdate(state.GuildId, state.ChannelId, state.SelfMute,
-                    state.SelfDeaf);
+                await _gatewayService.Gateway.VoiceStatusUpdate(state.GuildId, state.ChannelId, state.SelfMute, state.SelfDeaf);
             }
         }
 
@@ -137,13 +137,41 @@ namespace Quarrel.ViewModels.Services.Voice
             {
                 var state = _voiceConnection._state;
                 state.SelfMute = !state.SelfMute;
-                await _gatewayService.Gateway.VoiceStatusUpdate(state.GuildId, state.ChannelId, state.SelfMute,
-                    state.SelfDeaf);
+                await _gatewayService.Gateway.VoiceStatusUpdate(state.GuildId, state.ChannelId, state.SelfMute, state.SelfDeaf);
             }
         }
 
-        private async void ConnectToVoiceChannel(VoiceServerUpdate data, VoiceState state)
+        /// <inheritdoc/>
+        public VoiceState GetVoiceState(string userId)
         {
+            if (userId == null)
+            {
+                return null;
+            }
+
+            return _voiceStates.TryGetValue(userId, out VoiceState voiceState) ? voiceState : null;
+        }
+
+        /// <inheritdoc/>
+        public void AddOrUpdateVoiceState(VoiceState voiceState)
+        {
+            _voiceStates.AddOrUpdate(voiceState.UserId, voiceState);
+        }
+
+        /// <inheritdoc/>
+        public void RemoveVoiceState(string userId)
+        {
+            _voiceStates.Remove(userId);
+        }
+
+        /// <inheritdoc/>
+        public async void ConnectToVoiceChannel(VoiceServerUpdate data, VoiceState state = null)
+        {
+            if (state == null)
+            {
+                state = GetVoiceState(_currentUserService.CurrentUser.Id);
+            }
+
             _voiceConnection = new VoiceConnection(data, state, _webrtcManager);
             _voiceConnection.Speak += Speak;
             await _voiceConnection.ConnectAsync();

@@ -6,6 +6,7 @@ using DiscordAPI.Models.Guilds;
 using GalaSoft.MvvmLight.Command;
 using JetBrains.Annotations;
 using Quarrel.ViewModels.Helpers;
+using Quarrel.ViewModels.Messages;
 using Quarrel.ViewModels.Messages.Gateway;
 using Quarrel.ViewModels.Messages.Gateway.Guild;
 using Quarrel.ViewModels.Messages.Navigation;
@@ -123,164 +124,18 @@ namespace Quarrel.ViewModels
 
         private void RegisterGuildsMessages()
         {
+            MessengerInstance.Register<SetupMessage>(this, _ =>
+            {
+                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
+                {
+                    // TODO: Load root UI
+                });
+            });
+
             MessengerInstance.Register<GatewayReadyMessage>(this, m =>
             {
                 _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    IDictionary<string, ReadState> readStates = new ConcurrentDictionary<string, ReadState>();
-                    foreach (var state in m.EventData.ReadStates)
-                    {
-                        readStates.Add(state.Id, state);
-                    }
-
-                    // Add DM
-                    var dmGuild = new BindableGuild(new Guild() { Name = "DM", Id = "DM" }) { Position = -1 };
-
-                    _guildsService.AddOrUpdateGuild(dmGuild.Model.Id, dmGuild);
-
-                    // Add DM channels
-                    if (m.EventData.PrivateChannels != null && m.EventData.PrivateChannels.Any())
-                    {
-                        foreach (var channel in m.EventData.PrivateChannels)
-                        {
-                            BindableChannel bChannel = new BindableChannel(channel);
-
-                            ChannelOverride cSettings = _channelsService.GetChannelSettings(channel.Id);
-                            if (cSettings != null)
-                            {
-                                bChannel.Muted = cSettings.Muted;
-                            }
-
-                            dmGuild.Channels.Add(bChannel);
-
-                            if (readStates.ContainsKey(bChannel.Model.Id))
-                            {
-                                bChannel.ReadState = readStates[bChannel.Model.Id];
-                                if (bChannel.ReadState.LastMessageId != bChannel.Model.LastMessageId)
-                                {
-                                    bChannel.ReadState.MentionCount++;
-                                }
-                            }
-
-                            _channelsService.AddOrUpdateChannel(bChannel.Model.Id, bChannel);
-                        }
-
-                        // Sort by last message timestamp
-                        dmGuild.Channels = new ObservableCollection<BindableChannel>(dmGuild.Channels.OrderByDescending(x => Convert.ToUInt64(x.Model.LastMessageId)).ToList());
-                    }
-
-                    foreach (var guild in m.EventData.Guilds)
-                    {
-                        BindableGuild bGuild = new BindableGuild(guild);
-
-                        // Handle guild settings
-                        GuildSetting gSettings = _guildsService.GetGuildSetting(guild.Id);
-                        if (gSettings != null)
-                        {
-                            bGuild.IsMuted = gSettings.Muted;
-                        }
-
-                        // Guild Order
-                        bGuild.Position = m.EventData.Settings.GuildOrder.IndexOf(x => x == bGuild.Model.Id);
-
-                        if (guild.Unavailable)
-                        {
-                            // TODO:
-                            // This should be updated to display information about unavailable guild
-                            // We also need a mechanism to readd the guild once it becomes available
-                            continue;
-                        }
-
-                        // This is needed to fix ordering when multiple categories have the same position
-                        var categories = guild.Channels.Where(x => x.Type == 4).ToList();
-
-                        foreach (var group in categories.GroupBy(x => x.Position).OrderBy(x => x.Key))
-                        {
-                            foreach (var channel in group.Skip(1))
-                            {
-                                bool shouldDo = false;
-                                foreach (var category in categories)
-                                {
-                                    if (category.Id == channel.Id)
-                                    {
-                                        shouldDo = true;
-                                    }
-
-                                    if (shouldDo)
-                                    {
-                                        category.Position += 1;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (guild.VoiceStates != null)
-                        {
-                            foreach (var state in guild.VoiceStates)
-                            {
-                                _voiceService.VoiceStates[state.UserId] = state;
-                            }
-                        }
-
-                        // Guild Channels
-                        foreach (var channel in guild.Channels)
-                        {
-                            channel.GuildId = guild.Id;
-                            IEnumerable<VoiceState> state = guild.VoiceStates?.Where(x => x.ChannelId == channel.Id);
-                            BindableChannel bChannel = new BindableChannel(channel, state);
-
-                            // Handle channel settings
-                            ChannelOverride cSettings = _channelsService.GetChannelSettings(channel.Id);
-                            if (cSettings != null)
-                            {
-                                bChannel.Muted = cSettings.Muted;
-                            }
-
-                            // Find parent position
-                            if (!string.IsNullOrEmpty(bChannel.ParentId) && bChannel.ParentId != bChannel.Model.Id)
-                            {
-                                bChannel.ParentPostion = guild.Channels.First(x => x.Id == bChannel.ParentId).Position;
-                            }
-                            else
-                            {
-                                bChannel.ParentPostion = -1;
-                            }
-
-                            if (readStates.ContainsKey(bChannel.Model.Id))
-                            {
-                                bChannel.ReadState = readStates[bChannel.Model.Id];
-                            }
-
-                            bGuild.Channels.Add(bChannel);
-                            _channelsService.AddOrUpdateChannel(bChannel.Model.Id, bChannel);
-                        }
-
-                        bGuild.Channels = new ObservableCollection<BindableChannel>(bGuild.Channels.OrderBy(x => x.AbsolutePostion).ToList());
-
-                        bGuild.Model.Channels = null;
-
-                        _guildsService._guildUsers.AddOrUpdate(guild.Id, new ConcurrentDictionary<string, BindableGuildMember>());
-                        foreach (var user in guild.Members)
-                        {
-                            BindableGuildMember bgMember = new BindableGuildMember(user, guild.Id);
-                            _guildsService._guildUsers[guild.Id].TryAdd(bgMember.Model.User.Id, bgMember);
-                        }
-
-                        // Guild Roles
-                        foreach (var role in guild.Roles)
-                        {
-                            _cacheService.Runtime.SetValue(Constants.Cache.Keys.GuildRole, role, guild.Id + role.Id);
-                        }
-
-                        // Guild Presences
-                        foreach (var presence in guild.Presences)
-                        {
-                            MessengerInstance.Send(new GatewayPresenceUpdatedMessage(presence.User.Id, presence));
-                        }
-
-                        _guildsService.AddOrUpdateGuild(bGuild.Model.Id, bGuild);
-                    }
-
                     BindableGuilds.Clear();
                     BindableGuilds.Add(_guildsService.GetGuild("DM"));
                     foreach (var folder in m.EventData.Settings.GuildFolders)
@@ -299,6 +154,7 @@ namespace Quarrel.ViewModels
                     CurrentGuild = dmGuild;
                 });
             });
+
             MessengerInstance.Register<GuildNavigateMessage>(this, m =>
             {
                 BindableChannel channel =

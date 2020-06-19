@@ -3,7 +3,6 @@
 using DiscordAPI.Models;
 using GalaSoft.MvvmLight.Messaging;
 using Quarrel.ViewModels.Messages.Gateway;
-using Quarrel.ViewModels.Models.Bindables.Users;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -15,8 +14,6 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
     public class FriendsService : IFriendsService
     {
         private IDictionary<string, Friend> _friends = new ConcurrentDictionary<string, Friend>();
-
-        private IDictionary<string, GuildMember> _dmUsers = new ConcurrentDictionary<string, GuildMember>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FriendsService"/> class.
@@ -36,6 +33,29 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
                     }
                 }
             });
+        }
+
+        /// <inheritdoc/>
+        public Friend GetFriend(string userId)
+        {
+            if (userId == null)
+            {
+                return null;
+            }
+
+            return _friends.TryGetValue(userId, out Friend friend) ? friend : null;
+        }
+
+        /// <inheritdoc/>
+        public void AddOrUpdateFriend(string userId, Friend friend)
+        {
+            _friends.AddOrUpdate(userId, friend);
+        }
+
+        /// <inheritdoc/>
+        public void RemoveFriend(string userId)
+        {
+            _friends.Remove(userId);
         }
     }
 }

@@ -20,9 +20,8 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
         /// <summary>
         /// Adds or updates a channel in the channel list.
         /// </summary>
-        /// <param name="channelId">The channel's id.</param>
         /// <param name="channel">The <see cref="Channel"/> object.</param>
-        void AddOrUpdateChannel(string channelId, Channel channel);
+        void AddOrUpdateChannel(Channel channel);
 
         /// <summary>
         /// Removes a channel from the channel list.
@@ -43,5 +42,25 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
         /// <param name="channelId">The channel's id.</param>
         /// <param name="channelOverride">The channel's new settings.</param>
         void AddOrUpdateChannelSettings(string channelId, ChannelOverride channelOverride);
+
+        /// <summary>
+        /// Gets a <see cref="ReadState"/> from the channel server.
+        /// </summary>
+        /// <param name="channelId">The channel's id.</param>
+        /// <returns>The channek's read state.</returns>
+        ReadState GetReadState(string channelId);
+
+        /// <summary>
+        /// Adds or Updates a channel's <see cref="ReadState"/> in the channel service.
+        /// </summary>
+        /// <param name="channelId">The channel's id.</param>
+        /// <param name="readState">The new <see cref="ReadState"/>.</param>
+        void AddOrUpdateReadState(string channelId, ReadState readState);
+
+        /// <summary>
+        /// Removes a <see cref="ReadState"/> from the channel service.
+        /// </summary>
+        /// <param name="channelId">The channel's id.</param>
+        void RemoveReadState(string channelId);
     }
 }

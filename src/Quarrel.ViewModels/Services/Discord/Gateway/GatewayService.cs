@@ -20,6 +20,7 @@ using Quarrel.ViewModels.Messages.Gateway.Guild;
 using Quarrel.ViewModels.Messages.Gateway.Relationships;
 using Quarrel.ViewModels.Messages.Gateway.Voice;
 using Quarrel.ViewModels.Messages.Navigation;
+using Quarrel.ViewModels.Messages.Services.Discord.Messages;
 using Quarrel.ViewModels.Services.Analytics;
 using Quarrel.ViewModels.Services.Cache;
 using Quarrel.ViewModels.Services.Discord.Channels;
@@ -27,6 +28,7 @@ using Quarrel.ViewModels.Services.Discord.CurrentUser;
 using Quarrel.ViewModels.Services.Discord.Friends;
 using Quarrel.ViewModels.Services.Discord.Guilds;
 using Quarrel.ViewModels.Services.Discord.Presence;
+using Quarrel.ViewModels.Services.Discord.Voice;
 using Quarrel.ViewModels.ViewModels.Messages.Gateway;
 using System;
 using System.Collections.Generic;
@@ -47,6 +49,7 @@ namespace Quarrel.ViewModels.Services.Gateway
         private readonly IFriendsService _friendsService;
         private readonly IGuildsService _guildsService;
         private readonly IPresenceService _presenceService;
+        private readonly IVoiceService _voiceService;
         private readonly IServiceProvider _serviceProvider;
 
         private string previousGuildId;
@@ -58,24 +61,29 @@ namespace Quarrel.ViewModels.Services.Gateway
         /// <param name="cacheService">The app's cache service.</param>
         /// <param name="channelsService">The app's current user service.</param>
         /// <param name="currentUserService">The app's channels service.</param>
+        /// <param name="friendsService">The app's friend service.</param>
         /// <param name="guildsService">The app's guilds service.</param>
         /// <param name="presenceService">The app's presence service.</param>
+        /// <param name="voiceService">The app's voice service.</param>
         /// <param name="serviceProvider">The app's service provider.</param>
         public GatewayService(
             IAnalyticsService analyticsService,
             ICacheService cacheService,
             IChannelsService channelsService,
             ICurrentUserService currentUserService,
+            IFriendsService friendsService,
             IGuildsService guildsService,
             IPresenceService presenceService,
+            IVoiceService voiceService,
             IServiceProvider serviceProvider)
         {
             _analyticsService = analyticsService;
             _cacheService = cacheService;
-            _friendsService = channelsService;
+            _friendsService = friendsService;
             _currentUserService = currentUserService;
             _guildsService = guildsService;
             _presenceService = presenceService;
+            _voiceService = voiceService;
             _serviceProvider = serviceProvider;
         }
 
@@ -210,6 +218,9 @@ namespace Quarrel.ViewModels.Services.Gateway
 
         private void Gateway_Ready(object sender, GatewayEventArgs<Ready> e)
         {
+            _currentUserService.CurrentUser = e.EventData.User;
+            _currentUserService.CurrentUserSettings = e.EventData.Settings;
+
             foreach (var gSettings in e.EventData.GuildSettings)
             {
                 _guildsService.AddOrUpdateGuildSettings(gSettings.GuildId, gSettings);
@@ -218,6 +229,11 @@ namespace Quarrel.ViewModels.Services.Gateway
                 {
                     _channelsService.AddOrUpdateChannelSettings(cSettings.ChannelId, cSettings);
                 }
+            }
+
+            foreach (var readState in e.EventData.ReadStates)
+            {
+                _channelsService.AddOrUpdateReadState(readState.Id, readState);
             }
 
             foreach (var presence in e.EventData.Presences)
@@ -232,10 +248,35 @@ namespace Quarrel.ViewModels.Services.Gateway
 
             foreach (var friend in e.EventData.Friends)
             {
-                _fr
+                _friendsService.AddOrUpdateFriend(friend.Id, friend);
             }
 
-            Messenger.Default.Send(new GatewayReadyMessage(e.EventData));
+            foreach (var channel in e.EventData.PrivateChannels)
+            {
+                _channelsService.AddOrUpdateChannel(channel);
+            }
+
+            foreach (var guild in e.EventData.Guilds)
+            {
+                _guildsService.AddOrUpdateGuild(guild);
+
+                foreach (var channel in guild.Channels)
+                {
+                    _channelsService.AddOrUpdateChannel(channel);
+                }
+
+                foreach (var voiceState in guild.VoiceStates)
+                {
+                    _voiceService.AddOrUpdateVoiceState(voiceState);
+                }
+
+                foreach (var member in guild.Members)
+                {
+                    _guildsService.AddOrUpdateGuildMember(member, guild.Id);
+                }
+            }
+
+            Messenger.Default.Send(new SetupMessage());
         }
 
         private void Gateway_InvalidSession(object sender, GatewayEventArgs<InvalidSession> e)
@@ -246,111 +287,144 @@ namespace Quarrel.ViewModels.Services.Gateway
 
         private void Gateway_MessageCreated(object sender, GatewayEventArgs<Message> e)
         {
-            var currentUser = _currentUserService.CurrentUser.Model;
-
             if (e.EventData.User == null)
             {
-                e.EventData.User = currentUser;
+                e.EventData.User = _currentUserService.CurrentUser;
             }
 
-            Messenger.Default.Send(new GatewayMessageRecievedMessage(e.EventData));
+            Messenger.Default.Send(new DiscordMessageRecievedMessage(e.EventData));
         }
 
         private void Gateway_MessageDeleted(object sender, GatewayEventArgs<MessageDelete> e)
         {
-            Messenger.Default.Send(new GatewayMessageDeletedMessage(e.EventData.ChannelId, e.EventData.MessageId));
+            Messenger.Default.Send(new DiscordMessageDeletedMessage(e.EventData.ChannelId, e.EventData.MessageId));
         }
 
         private void Gateway_MessageUpdated(object sender, GatewayEventArgs<Message> e)
         {
-            Messenger.Default.Send(new GatewayMessageUpdatedMessage(e.EventData));
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_MessageAck(object sender, GatewayEventArgs<MessageAck> e)
         {
-            Messenger.Default.Send(new GatewayMessageAckMessage(e.EventData.ChannelId, e.EventData.Id));
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_MessageReactionAdded(object sender, GatewayEventArgs<MessageReactionUpdate> e)
         {
-            Messenger.Default.Send(new GatewayReactionAddedMessage(e.EventData.MessageId, e.EventData.ChannelId, e.EventData.Emoji, e.EventData.UserId));
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_MessageReactionRemoved(object sender, GatewayEventArgs<MessageReactionUpdate> e)
         {
-            Messenger.Default.Send(new GatewayReactionRemovedMessage(e.EventData.MessageId, e.EventData.ChannelId, e.EventData.Emoji));
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_MessageReactionRemovedAll(object sender, GatewayEventArgs<MessageReactionRemoveAll> e)
         {
-            Messenger.Default.Send(new GatewayReactionClearedMessage(e.EventData.MessageId, e.EventData.ChannelId));
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_ChannelCreated(object sender, GatewayEventArgs<Channel> e)
         {
-            Messenger.Default.Send(new GatewayChannelCreatedMessage(e.EventData));
+            _channelsService.AddOrUpdateChannel(e.EventData);
+
+            if (e.EventData is GuildChannel guildChannel)
+            {
+                _guildsService.AddOrUpdateChannel(guildChannel);
+            }
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_ChannelDeleted(object sender, GatewayEventArgs<Channel> e)
         {
-            Messenger.Default.Send(new GatewayChannelDeletedMessage(e.EventData));
+            if (e.EventData is GuildChannel guildChannel)
+            {
+                _guildsService.RemoveChannel(guildChannel.Id, guildChannel.GuildId);
+            }
+
+            _channelsService.RemoveChannel(e.EventData.Id);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_GuildChannelUpdated(object sender, GatewayEventArgs<GuildChannel> e)
         {
-            Messenger.Default.Send(new GatewayGuildChannelUpdatedMessage(e.EventData));
-        }
+            _guildsService.AddOrUpdateChannel(e.EventData);
 
-        private void Gateway_DirectMessageChannelCreated(object sender, GatewayEventArgs<DirectMessageChannel> e)
-        {
-            Messenger.Default.Send(new GatewayDirectMessageChannelCreatedMessage(e.EventData));
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_GuildCreated(object sender, GatewayEventArgs<Guild> e)
         {
-            Messenger.Default.Send(new GatewayGuildCreatedMessage(e.EventData));
+            _guildsService.AddOrUpdateGuild(e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_GuildDeleted(object sender, GatewayEventArgs<GuildDelete> e)
         {
-            Messenger.Default.Send(new GatewayGuildDeletedMessage(e.EventData));
+            _guildsService.RemoveGuild(e.EventData.GuildId);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_GuildUpdated(object sender, GatewayEventArgs<Guild> e)
         {
-            Messenger.Default.Send(new GatewayGuildUpdatedMessage(e.EventData));
+            _guildsService.AddOrUpdateGuild(e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_TypingStarted(object sender, GatewayEventArgs<TypingStart> e)
         {
-            Messenger.Default.Send(new GatewayTypingStartedMessage(e.EventData));
+            // TODO: Send message to handle UI
         }
 
         private void GatewayGuildMembersChunk(object sender, GatewayEventArgs<GuildMembersChunk> e)
         {
-            Messenger.Default.Send(new GatewayGuildMembersChunkMessage(e.EventData));
+            foreach (var member in e.EventData.Members)
+            {
+                _guildsService.AddOrUpdateGuildMember(member, e.EventData.GuildId);
+            }
+
+            foreach (var presence in e.EventData.Presences)
+            {
+                _presenceService.AddOrUpdateUserPrecense(presence.User.Id, presence);
+            }
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_GuildMemberListUpdated(object sender, GatewayEventArgs<GuildMemberListUpdated> e)
         {
+            // TODO: Total refactor
             Messenger.Default.Send(new GatewayGuildMemberListUpdatedMessage(e.EventData));
         }
 
         private void Gateway_GuildSynced(object sender, GatewayEventArgs<GuildSync> e)
         {
-            e.EventData.Cache();
-            Messenger.Default.Send(new GatewayGuildSyncMessage(e.EventData.GuildId, e.EventData.Members.ToList()));
+            foreach (var presence in e.EventData.Presences)
+            {
+                _presenceService.AddOrUpdateUserPrecense(presence.User.Id, presence);
+            }
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_PresenceUpdated(object sender, GatewayEventArgs<Presence> e)
         {
-            Messenger.Default.Send(new GatewayPresenceUpdatedMessage(e.EventData.User.Id, e.EventData));
+            _presenceService.AddOrUpdateUserPrecense(e.EventData.User.Id, e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_UserNoteUpdated(object sender, GatewayEventArgs<UserNote> e)
         {
             _cacheService.Runtime.SetValue(Constants.Cache.Keys.Note, e.EventData.Note, e.EventData.UserId);
-            Messenger.Default.Send(new GatewayNoteUpdatedMessage(e.EventData.UserId, e.EventData.Note));
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_UserGuildSettingsUpdated(object sender, GatewayEventArgs<GuildSetting> e)
@@ -362,41 +436,54 @@ namespace Quarrel.ViewModels.Services.Gateway
                 _channelsService.AddOrUpdateChannelSettings(channel.ChannelId, channel);
             }
 
-            Messenger.Default.Send(new GatewayUserGuildSettingsUpdatedMessage(e.EventData));
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_UserSettingsUpdated(object sender, GatewayEventArgs<UserSettings> e)
         {
-            Messenger.Default.Send(new GatewayUserSettingsUpdatedMessage(e.EventData));
+            _currentUserService.CurrentUserSettings = e.EventData;
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_VoiceServerUpdated(object sender, GatewayEventArgs<VoiceServerUpdate> e)
         {
-            Messenger.Default.Send(new GatewayVoiceServerUpdateMessage(e.EventData));
+            _voiceService.ConnectToVoiceChannel(e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_VoiceStateUpdated(object sender, GatewayEventArgs<VoiceState> e)
         {
-            Messenger.Default.Send(new GatewayVoiceStateUpdateMessage(e.EventData));
+            _voiceService.AddOrUpdateVoiceState(e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_RelationShipAdded(object sender, GatewayEventArgs<Friend> e)
         {
-            Messenger.Default.Send(new GatewayRelationshipAddedMessage(e.EventData));
+            _friendsService.AddOrUpdateFriend(e.EventData.Id, e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_RelationShipRemoved(object sender, GatewayEventArgs<Friend> e)
         {
-            Messenger.Default.Send(new GatewayRelationshipRemovedMessage(e.EventData));
+            _friendsService.AddOrUpdateFriend(e.EventData.Id, e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_RelationShipUpdated(object sender, GatewayEventArgs<Friend> e)
         {
-            Messenger.Default.Send(new GatewayRelationshipUpdatedMessage(e.EventData));
+            _friendsService.AddOrUpdateFriend(e.EventData.Id, e.EventData);
+
+            // TODO: Send message to handle UI
         }
 
         private void Gateway_SessionReplaced(object sender, GatewayEventArgs<SessionReplace[]> e)
         {
+            // TODO: Implement what so ever.
             Messenger.Default.Send(new GatewaySessionReplacedMessage(e.EventData));
         }
 

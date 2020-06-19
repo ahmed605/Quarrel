@@ -5,6 +5,7 @@ using DiscordAPI.Models.Messages;
 using GalaSoft.MvvmLight.Command;
 using JetBrains.Annotations;
 using Quarrel.ViewModels.Messages.Gateway;
+using Quarrel.ViewModels.Messages.Services.Discord.Messages;
 using Quarrel.ViewModels.Models.Bindables.Channels;
 using Quarrel.ViewModels.Models.Bindables.Messages;
 using Quarrel.ViewModels.Models.Bindables.Users;
@@ -335,6 +336,11 @@ namespace Quarrel.ViewModels
                 }
             });
 
+            MessengerInstance.Register<DiscordMessageRecievedMessage>(this, m =>
+            {
+                // TODO: Handle incoming messages
+            });
+
             // Handles message deletion
             MessengerInstance.Register<GatewayMessageDeletedMessage>(this, m =>
             {
@@ -355,6 +361,11 @@ namespace Quarrel.ViewModels
                         }
                     });
                 }
+            });
+
+            MessengerInstance.Register<DiscordMessageDeletedMessage>(this, m =>
+            {
+                // TODO: Handle message deletion.
             });
 
             // Handles message updated

@@ -92,9 +92,6 @@ namespace Quarrel.ViewModels.Services.Discord.Rest
         public IVoiceService VoiceService { get; private set; }
 
         /// <inheritdoc/>
-        public User CurrentUser { get; set; }
-
-        /// <inheritdoc/>
         public async Task<bool> Login([NotNull] string email, [NotNull] string password)
         {
             BasicRestFactory restFactory = new BasicRestFactory();

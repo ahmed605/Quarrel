@@ -12,11 +12,11 @@ namespace Quarrel.ViewModels.Services.Discord.CurrentUser
         /// <summary>
         /// Gets the current user as a <see cref="User"/>.
         /// </summary>
-        User CurrentUser { get; }
+        User CurrentUser { get; set; }
 
         /// <summary>
         /// Gets the current user's discord settings.
         /// </summary>
-        UserSettings CurrentUserSettings { get; }
+        UserSettings CurrentUserSettings { get; set; }
     }
 }

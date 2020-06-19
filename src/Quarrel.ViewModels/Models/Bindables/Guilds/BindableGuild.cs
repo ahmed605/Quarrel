@@ -32,7 +32,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
     /// </summary>
     public class BindableGuild : BindableModelBase<Guild>, IGuildListItem
     {
-        private ObservableCollection<BindableChannel> _channels;
         private Permissions _permissions = null;
         private int _position;
         private bool _selected;
@@ -283,15 +282,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
                 _permissions = perms;
                 return perms;
             }
-        }
-
-        /// <summary>
-        /// Gets or sets an observable collection of channels in the guild.
-        /// </summary>
-        public ObservableCollection<BindableChannel> Channels
-        {
-            get => _channels;
-            set => Set(ref _channels, value);
         }
 
         /// <summary>
