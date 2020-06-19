@@ -217,6 +217,9 @@ namespace Quarrel.ViewModels.Services.Gateway
             _currentUserService.CurrentUser = e.EventData.User;
             _currentUserService.CurrentUserSettings = e.EventData.Settings;
 
+            Guild dmGuild = new Guild() { Id = "DM" };
+            _guildsService.AddOrUpdateGuild(dmGuild);
+
             foreach (var gSettings in e.EventData.GuildSettings)
             {
                 _guildsService.AddOrUpdateGuildSettings(gSettings.GuildId, gSettings);
@@ -272,7 +275,7 @@ namespace Quarrel.ViewModels.Services.Gateway
                 }
             }
 
-            Messenger.Default.Send(new SetupMessage());
+            Messenger.Default.Send(new SetupMessage(e.EventData));
         }
 
         private void Gateway_InvalidSession(object sender, GatewayEventArgs<InvalidSession> e)

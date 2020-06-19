@@ -20,19 +20,6 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
         /// </summary>
         public FriendsService()
         {
-            Messenger.Default.Register<GatewayReadyMessage>(this, m =>
-            {
-                foreach (var channel in m.EventData.PrivateChannels)
-                {
-                    foreach (var user in channel.Users)
-                    {
-                        if (!_dmUsers.ContainsKey(user.Id))
-                        {
-                            _dmUsers.Add(user.Id, new GuildMember() { User = user });
-                        }
-                    }
-                }
-            });
         }
 
         /// <inheritdoc/>

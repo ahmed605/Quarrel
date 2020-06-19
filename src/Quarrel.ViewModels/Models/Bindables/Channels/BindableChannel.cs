@@ -2,12 +2,14 @@
 
 using DiscordAPI.Models;
 using DiscordAPI.Models.Channels;
+using DiscordAPI.Models.Guilds;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Ioc;
 using JetBrains.Annotations;
 using Quarrel.ViewModels.Helpers;
 using Quarrel.ViewModels.Messages.Gateway;
 using Quarrel.ViewModels.Messages.Services.Settings;
+using Quarrel.ViewModels.Messages.Voice;
 using Quarrel.ViewModels.Models.Bindables.Abstract;
 using Quarrel.ViewModels.Models.Bindables.Guilds;
 using Quarrel.ViewModels.Models.Bindables.Users;
@@ -18,19 +20,18 @@ using Quarrel.ViewModels.Services.Discord.CurrentUser;
 using Quarrel.ViewModels.Services.Discord.Friends;
 using Quarrel.ViewModels.Services.Discord.Guilds;
 using Quarrel.ViewModels.Services.Discord.Rest;
+using Quarrel.ViewModels.Services.Discord.Voice;
 using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Gateway;
 using Quarrel.ViewModels.Services.Navigation;
 using Quarrel.ViewModels.Services.Settings;
 using Quarrel.ViewModels.Services.Settings.Enums;
-using Quarrel.ViewModels.Services.Voice;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
-using Quarrel.ViewModels.Messages.Voice;
 
 namespace Quarrel.ViewModels.Models.Bindables.Channels
 {
@@ -147,37 +148,12 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         }
 
         /// <summary>
-        /// Gets the <see cref="BindableGuild"/> the channel belongs to.
+        /// Gets the <see cref="Guild"/> the channel belongs to.
         /// </summary>
-        public BindableGuild Guild
+        public Guild Guild
         {
             get => GuildsService.GetGuild(GuildId);
         }
-
-        /// <summary>
-        /// Gets a value indicating whether or not the channel is a standard text channel.
-        /// </summary>
-        public bool IsTextChannel => Model.Type == 0;
-
-        /// <summary>
-        /// Gets a value indicating whether or not the channel is a dm channel.
-        /// </summary>
-        public bool IsDirectChannel => Model.Type == 1;
-
-        /// <summary>
-        /// Gets a value indicating whether or not the channel is a voice channel.
-        /// </summary>
-        public bool IsVoiceChannel => Model.Type == 2;
-
-        /// <summary>
-        /// Gets a value indicating whether or not the channel is a group dm channel.
-        /// </summary>
-        public bool IsGroupChannel => Model.Type == 3;
-
-        /// <summary>
-        /// Gets a value indicating whether or not the channel is a category.
-        /// </summary>
-        public bool IsCategory => Model.Type == 4;
 
         /// <summary>
         /// Gets a value indicating whether or not the channel is a guild channel.
@@ -250,7 +226,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
                         perms = ChannelsService.GetChannel(ParentId).Permissions.Clone();
                     }
 
-                    var user = Guild.Model.Members.FirstOrDefault(x => x.User.Id == DiscordService.CurrentUser.Id);
+                    var user = Guild.Members.FirstOrDefault(x => x.User.Id == CurrentUsersService.CurrentUser.Id);
 
                     GuildPermission roleDenies = 0;
                     GuildPermission roleAllows = 0;
@@ -282,7 +258,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
                     perms.AddAllows(memberAllows);
 
                     // If owner add admin
-                    if (Guild.Model.OwnerId == user.User.Id)
+                    if (Guild.OwnerId == user.User.Id)
                     {
                         perms.AddAllows(GuildPermission.Administrator);
                     }
@@ -423,7 +399,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
                 {
                     return !SettingsService.Roaming.GetValue<bool>(SettingKeys.ShowNoPermssions) &&
                         !Guild.Channels
-                        .Where(x => x.Model.Id != Model.Id && x.ParentId == Model.Id)
+                        .Where(x => x.Id != Model.Id && x.ParentId == Model.Id)
                         .Any(x => x.Permissions.ReadMessages);
                 }
 
@@ -803,7 +779,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
                 var user = GuildsService.GetGuildMember(id, GuildId);
                 if (user != null)
                 {
-                    names.Add(user.DisplayName);
+                    names.Add(user.DisplayName());
                 }
             }
 

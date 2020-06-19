@@ -56,55 +56,6 @@ namespace Quarrel.ViewModels.Services.Discord.Voice
             _gatewayService = gatewayService;
             _webrtcManager = webrtcManager;
 
-            Messenger.Default.Register<GatewayVoiceStateUpdateMessage>(this, m =>
-            {
-                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
-                {
-                    if (VoiceStates.ContainsKey(m.VoiceState.UserId))
-                    {
-                        var oldChannel = _channelsService.GetChannel(VoiceStates[m.VoiceState.UserId].ChannelId);
-                        oldChannel?.ConnectedUsers.Remove(m.VoiceState.UserId);
-
-                        if (m.VoiceState.ChannelId == null)
-                        {
-                            if (m.VoiceState.UserId == _discordService.CurrentUser.Id)
-                            {
-                                DisconnectFromVoiceChannel();
-                            }
-                            else
-                            {
-                                VoiceStates.Remove(m.VoiceState.UserId);
-                            }
-                        }
-                        else
-                        {
-                            VoiceStates[m.VoiceState.UserId] = m.VoiceState;
-                        }
-                    }
-                    else
-                    {
-                        VoiceStates[m.VoiceState.UserId] = m.VoiceState;
-                    }
-                });
-            });
-
-            Messenger.Default.Register<GatewayVoiceServerUpdateMessage>(this, m =>
-            {
-                if (!VoiceStates.ContainsKey(_discordService.CurrentUser.Id))
-                {
-                    VoiceStates.Add(
-                        _discordService.CurrentUser.Id,
-                        new VoiceState()
-                        {
-                            ChannelId = m.VoiceServer.ChannelId,
-                            GuildId = m.VoiceServer.GuildId,
-                            UserId = _discordService.CurrentUser.Id,
-                        });
-                }
-
-                ConnectToVoiceChannel(m.VoiceServer, VoiceStates[_discordService.CurrentUser.Id]);
-            });
-
             Messenger.Default.Register<SettingChangedMessage<string>>(this, m =>
             {
                 switch (m.Key)
@@ -156,6 +107,11 @@ namespace Quarrel.ViewModels.Services.Discord.Voice
         public void AddOrUpdateVoiceState(VoiceState voiceState)
         {
             _voiceStates.AddOrUpdate(voiceState.UserId, voiceState);
+
+            if (voiceState.UserId == _currentUserService.CurrentUser.Id)
+            {
+                DisconnectFromVoiceChannel();
+            }
         }
 
         /// <inheritdoc/>

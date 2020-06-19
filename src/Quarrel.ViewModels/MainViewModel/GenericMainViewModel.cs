@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 using Quarrel.ViewModels.Helpers;
 using Quarrel.ViewModels.Messages;
 using Quarrel.ViewModels.Messages.Gateway;
-using Quarrel.ViewModels.Messages.Gateway.Relationships;
 using Quarrel.ViewModels.Messages.Services.Discord.Relationships;
 using Quarrel.ViewModels.Models.Bindables.Users;
 using Quarrel.ViewModels.Services.Analytics;
@@ -26,7 +25,6 @@ using Quarrel.ViewModels.Services.Navigation;
 using Quarrel.ViewModels.Services.Settings;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Quarrel.ViewModels

@@ -1,11 +1,9 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
-using DiscordAPI.Models.Guilds;
-
-namespace DiscordAPI.Models
+namespace DiscordAPI.Models.Guilds
 {
     /// <summary>
-    /// Extensions on the <see cref="Guilds.Guild"/>.
+    /// Extensions on the <see cref="Guild"/>.
     /// </summary>
     internal static class GuildExtensions
     {

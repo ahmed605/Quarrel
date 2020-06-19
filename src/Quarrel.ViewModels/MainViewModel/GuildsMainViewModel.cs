@@ -2,7 +2,6 @@
 
 using DiscordAPI.Models;
 using DiscordAPI.Models.Channels;
-using DiscordAPI.Models.Guilds;
 using GalaSoft.MvvmLight.Command;
 using JetBrains.Annotations;
 using Quarrel.ViewModels.Helpers;
@@ -48,10 +47,9 @@ namespace Quarrel.ViewModels
                 {
                     bool collapsed = !bindableGuildFolder.IsCollapsed;
                     bindableGuildFolder.IsCollapsed = collapsed;
-                    foreach (var guildId in bindableGuildFolder.Model.GuildIds)
+                    foreach (var guild in BindableGuilds)
                     {
-                        BindableGuild guild = _guildsService.GetGuild(guildId);
-                        if (guild != null)
+                        if (guild is BindableGuild bindable && bindableGuildFolder.Model.GuildIds.Contains(bindable.Model.Id))
                         {
                             guild.IsCollapsed = collapsed;
                         }
@@ -124,27 +122,20 @@ namespace Quarrel.ViewModels
 
         private void RegisterGuildsMessages()
         {
-            MessengerInstance.Register<SetupMessage>(this, _ =>
+            MessengerInstance.Register<SetupMessage>(this, m =>
             {
                 _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    // TODO: Load root UI
-                });
-            });
-
-            MessengerInstance.Register<GatewayReadyMessage>(this, m =>
-            {
-                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
-                {
+                    BindableGuild dmGuild = new BindableGuild(_guildsService.GetGuild("DM"));
                     BindableGuilds.Clear();
-                    BindableGuilds.Add(_guildsService.GetGuild("DM"));
-                    foreach (var folder in m.EventData.Settings.GuildFolders)
+                    BindableGuilds.Add(dmGuild);
+                    foreach (var folder in m.ReadyMessage.Settings.GuildFolders)
                     {
                         BindableGuildFolder bindableFolder = new BindableGuildFolder(folder) { IsCollapsed = folder.GuildIds.Count() > 1 };
                         BindableGuilds.Add(bindableFolder);
                         foreach (var guildId in folder.GuildIds)
                         {
-                            BindableGuild guild = _guildsService.GetGuild(guildId);
+                            BindableGuild guild = new BindableGuild(_guildsService.GetGuild(guildId));
                             guild.FolderId = folder.Id;
                             guild.IsCollapsed = bindableFolder.IsCollapsed;
                             BindableGuilds.Add(guild);
@@ -158,22 +149,22 @@ namespace Quarrel.ViewModels
             MessengerInstance.Register<GuildNavigateMessage>(this, m =>
             {
                 BindableChannel channel =
-                m.Guild.Channels.FirstOrDefault(x => x.IsTextChannel && x.Permissions.ReadMessages);
+                m.Guild.Model.Channels.FirstOrDefault(x => x.IsTextChannel() && x.Permissions.ReadMessages);
                 BindableGuildMember currentGuildMember;
 
                 if (!m.Guild.IsDM)
                 {
-                    currentGuildMember = _guildsService.GetGuildMember(_currentUserService.CurrentUser.Model.Id, m.Guild.Model.Id);
+                    currentGuildMember = new BindableGuildMember(_guildsService.GetGuildMember(_currentUserService.CurrentUser.Id, m.Guild.Model.Id), m.Guild.Model.Id);
                 }
                 else
                 {
                     currentGuildMember = new BindableGuildMember(
                         new GuildMember()
                         {
-                            User = _currentUserService.CurrentUser.Model,
+                            User = _currentUserService.CurrentUser,
                         },
                         "DM",
-                        _currentUserService.CurrentUser.Presence);
+                        _presenceService.GetUserPrecense(_currentUserService.CurrentUser.Id));
                 }
 
                 _dispatcherHelper.CheckBeginInvokeOnUi(() =>
@@ -200,21 +191,23 @@ namespace Quarrel.ViewModels
                     Constants.Analytics.Events.OpenGuild,
                     ("guild-id", m.Guild.Model.Id));
             });
+
             MessengerInstance.Register<GatewayGuildCreatedMessage>(this, m =>
             {
                 BindableGuild guild = new BindableGuild(m.Guild);
-                _guildsService.AddOrUpdateGuild(m.Guild.Id, guild);
-                _dispatcherHelper.CheckBeginInvokeOnUi(() => { BindableGuilds.Insert(1, guild); });
+                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
+                {
+                    // TODO: Insert in correct spot
+                    BindableGuilds.Insert(1, guild);
+                });
             });
+
             MessengerInstance.Register<GatewayGuildDeletedMessage>(this, m =>
             {
-                BindableGuild guild;
-                if (_guildsService.GetGuild(m.Guild.GuildId) != null)
+                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    guild = _guildsService.GetGuild(m.Guild.GuildId);
-                    _guildsService.RemoveGuild(m.Guild.GuildId);
-                    _dispatcherHelper.CheckBeginInvokeOnUi(() => { BindableGuilds.Remove(guild); });
-                }
+                    BindableGuilds.RemoveAt(BindableGuilds.IndexOf(x => x is BindableGuild bindableGuild && bindableGuild.Model.Id == m.Guild.GuildId));
+                });
             });
             MessengerInstance.Register<GatewayChannelCreatedMessage>(this, m =>
             {
@@ -224,85 +217,27 @@ namespace Quarrel.ViewModels
                     guildId = gChannel.GuildId;
                 }
 
-                var bChannel = new BindableChannel(m.Channel);
-                if (bChannel.Model.Type != 4 && bChannel.ParentId != null)
+                if (CurrentGuild.Model.Id == guildId)
                 {
-                    BindableChannel parentChannel = _channelsService.GetChannel(bChannel.ParentId);
-                    bChannel.ParentPostion = parentChannel != null ? parentChannel.Position : 0;
+                    AddChannel(m.Channel);
                 }
-                else if (bChannel.ParentId == null)
-                {
-                    bChannel.ParentPostion = -1;
-                }
-
-                BindableGuild guild = _guildsService.GetGuild(guildId);
-                if (guild != null)
-                {
-                    for (int i = 0; i < guild.Channels.Count; i++)
-                    {
-                        if (guild.Channels[i].AbsolutePostion > bChannel.AbsolutePostion)
-                        {
-                            _dispatcherHelper.CheckBeginInvokeOnUi(() =>
-                            {
-                                guild.Channels.Insert(i, bChannel);
-                            });
-                            break;
-                        }
-                    }
-                }
-
-                _channelsService.AddOrUpdateChannel(bChannel.Model.Id, bChannel);
             });
             MessengerInstance.Register<GatewayChannelDeletedMessage>(this, m =>
             {
-                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
+                if (m.Channel.GuildId() == CurrentGuild.Model.Id)
                 {
-                    BindableChannel currentChannel = _channelsService.GetChannel(m.Channel.Id);
-                    if (currentChannel != null)
+                    _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                     {
-                        BindableGuild guild = _guildsService.GetGuild(currentChannel.GuildId);
-                        if (guild != null)
-                        {
-                            guild.Channels.Remove(currentChannel);
-                        }
-
-                        _channelsService.RemoveChannel(m.Channel.Id);
-                    }
-                });
+                        RemoveChannel(m.Channel.Id);
+                    });
+                }
             });
             MessengerInstance.Register<GatewayGuildChannelUpdatedMessage>(this, m =>
             {
                 _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    var bChannel = _channelsService.GetChannel(m.Channel.Id ?? "DM");
-                    bChannel.Model = m.Channel;
-
-                    if (bChannel.Model.Type != 4 && bChannel.ParentId != null)
-                    {
-                        BindableChannel parentChannel = _channelsService.GetChannel(bChannel.ParentId);
-                        bChannel.ParentPostion = parentChannel != null ? parentChannel.Position : 0;
-                    }
-                    else if (bChannel.ParentId == null)
-                    {
-                        bChannel.ParentPostion = -1;
-                    }
-
-                    BindableGuild guild = _guildsService.GetGuild(m.Channel.GuildId);
-                    if (guild != null)
-                    {
-                        guild.Channels.Remove(bChannel);
-                        for (int i = 0; i < guild.Channels.Count; i++)
-                        {
-                            if (guild.Channels[i].AbsolutePostion > bChannel.AbsolutePostion)
-                            {
-                                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
-                                {
-                                    guild.Channels.Insert(i, bChannel);
-                                });
-                                break;
-                            }
-                        }
-                    }
+                    RemoveChannel(m.Channel.Id);
+                    AddChannel(m.Channel);
                 });
             });
             MessengerInstance.Register<GatewayUserSettingsUpdatedMessage>(this, m =>
@@ -315,22 +250,37 @@ namespace Quarrel.ViewModels
                     }
                 });
             });
-            MessengerInstance.Register<GatewayGuildMembersChunkMessage>(this, m =>
-            {
-                _guildsService._guildUsers.TryGetValue(m.GuildMembersChunk.GuildId, out var guild);
-                foreach (var member in m.GuildMembersChunk.Members)
-                {
-                    guild.TryAdd(member.User.Id, new BindableGuildMember(member, m.GuildMembersChunk.GuildId));
-                }
+        }
 
-                if (m.GuildMembersChunk.Presences != null)
+        private void AddChannel(Channel channel)
+        {
+            var bChannel = new BindableChannel(channel);
+            if (bChannel.Model.Type != 4 && bChannel.ParentId != null)
+            {
+                GuildChannel parentChannel = _channelsService.GetChannel(bChannel.ParentId) as GuildChannel;
+                bChannel.ParentPostion = parentChannel != null ? parentChannel.Position : 0;
+            }
+            else if (bChannel.ParentId == null)
+            {
+                bChannel.ParentPostion = -1;
+            }
+
+            for (int i = 0; i < BindableChannels.Count; i++)
+            {
+                if (BindableChannels[i].AbsolutePostion > bChannel.AbsolutePostion)
                 {
-                    foreach (var presence in m.GuildMembersChunk.Presences)
+                    _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                     {
-                        _presenceService.AddOrUpdateUserPrecense(presence.User.Id, presence);
-                    }
+                        BindableChannels.Insert(i, bChannel);
+                    });
+                    break;
                 }
-            });
+            }
+        }
+
+        private void RemoveChannel(string channelId)
+        {
+            BindableChannels.RemoveAt(BindableChannels.IndexOf(x => x.Model.Id == channelId));
         }
     }
 }

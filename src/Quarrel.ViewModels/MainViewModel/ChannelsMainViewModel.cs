@@ -13,6 +13,7 @@ using Quarrel.ViewModels.Models.Bindables.Users;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -34,7 +35,7 @@ namespace Quarrel.ViewModels
         /// </summary>
         public RelayCommand<BindableChannel> NavigateChannelCommand => _navigateChannelCommand = _navigateChannelCommand ?? new RelayCommand<BindableChannel>(async (channel) =>
         {
-            if (channel.IsCategory)
+            if (channel.Model.IsCategory())
             {
                 bool newState = !channel.Collapsed;
                 for (int i = CurrentGuild.Channels.IndexOf(channel);
@@ -46,7 +47,7 @@ namespace Quarrel.ViewModels
                     CurrentGuild.Channels[i].Collapsed = newState;
                 }
             }
-            else if (channel.IsVoiceChannel)
+            else if (channel.Model.IsVoiceChannel())
             {
                 if (channel.Model is GuildChannel gChannel)
                 {
@@ -113,15 +114,9 @@ namespace Quarrel.ViewModels
         }
 
         /// <summary>
-        /// Gets a hashed collection of all channels in loaded by the client, by id.
+        /// Gets an <see cref="ObservableCollection{T}"/> of the <see cref="BindableChannel"/>s currently in view.
         /// </summary>
-        public IDictionary<string, BindableChannel> AllChannels { get; } = new ConcurrentDictionary<string, BindableChannel>();
-
-        /// <summary>
-        /// Gets a hashed collection all channel's settings, by id.
-        /// </summary>
-        public IDictionary<string, ChannelOverride> ChannelSettings { get; } =
-            new ConcurrentDictionary<string, ChannelOverride>();
+        public ObservableCollection<BindableChannel> BindableChannels { get; } = new ObservableCollection<BindableChannel>();
 
         private void RegisterChannelsMessages()
         {
