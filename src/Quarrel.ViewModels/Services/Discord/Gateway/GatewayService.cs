@@ -307,6 +307,8 @@ namespace Quarrel.ViewModels.Services.Gateway
 
         private void Gateway_MessageAck(object sender, GatewayEventArgs<MessageAck> e)
         {
+            _channelsService.GetReadState(e.EventData.ChannelId).LastMessageId = e.EventData.Id;
+
             // TODO: Send message to handle UI
         }
 

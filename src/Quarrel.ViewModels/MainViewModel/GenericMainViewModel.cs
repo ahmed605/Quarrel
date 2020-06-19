@@ -5,9 +5,9 @@ using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using JetBrains.Annotations;
 using Quarrel.ViewModels.Helpers;
+using Quarrel.ViewModels.Messages;
 using Quarrel.ViewModels.Messages.Gateway;
 using Quarrel.ViewModels.Messages.Gateway.Relationships;
-using Quarrel.ViewModels.Messages.Navigation;
 using Quarrel.ViewModels.Models.Bindables.Users;
 using Quarrel.ViewModels.Services.Analytics;
 using Quarrel.ViewModels.Services.Cache;
@@ -18,11 +18,11 @@ using Quarrel.ViewModels.Services.Discord.Friends;
 using Quarrel.ViewModels.Services.Discord.Guilds;
 using Quarrel.ViewModels.Services.Discord.Presence;
 using Quarrel.ViewModels.Services.Discord.Rest;
+using Quarrel.ViewModels.Services.Discord.Voice;
 using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Gateway;
 using Quarrel.ViewModels.Services.Navigation;
 using Quarrel.ViewModels.Services.Settings;
-using Quarrel.ViewModels.Services.Voice;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -170,14 +170,27 @@ namespace Quarrel.ViewModels
             });
 
             // Ready Message recieved. Setsup Friend Collections and navigates to DM guild
-            MessengerInstance.Register<GatewayReadyMessage>(this, _ =>
+            MessengerInstance.Register<SetupMessage>(this, _ =>
             {
                 _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    BindableCurrentFriends.AddRange(_friendsService.Friends.Values.Where(x => x.IsFriend));
-                    BindablePendingFriends.AddRange(
-                        _friendsService.Friends.Values.Where(x => x.IsIncoming || x.IsOutgoing));
-                    BindableBlockedUsers.AddRange(_friendsService.Friends.Values.Where(x => x.IsBlocked));
+                    foreach (var friend in _friendsService.Friends)
+                    {
+                        switch (friend.Type)
+                        {
+                            case 1:
+                                BindableCurrentFriends.Add(new BindableFriend(friend));
+                                break;
+
+                            case 2:
+                                BindableBlockedUsers.Add(new BindableFriend(friend));
+                                break;
+                            case 3:
+                            case 4:
+                                BindablePendingFriends.Add(new BindableFriend(friend));
+                                break;
+                        }
+                    }
                 });
             });
 

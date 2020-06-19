@@ -36,6 +36,9 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
         }
 
         /// <inheritdoc/>
+        public IReadOnlyCollection<Friend> Friends => _friends.Values.AsReadOnly();
+
+        /// <inheritdoc/>
         public Friend GetFriend(string userId)
         {
             if (userId == null)

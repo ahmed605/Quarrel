@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
+using System.Collections.Generic;
 
 namespace Quarrel.ViewModels.Services.Discord.Friends
 {
@@ -9,6 +10,11 @@ namespace Quarrel.ViewModels.Services.Discord.Friends
     /// </summary>
     public interface IFriendsService
     {
+        /// <summary>
+        /// Gets an enumerable list of friends.
+        /// </summary>
+        IReadOnlyCollection<Friend> Friends { get; }
+
         /// <summary>
         /// Gets a <see cref="Friend"/> from the friends service.
         /// </summary>
