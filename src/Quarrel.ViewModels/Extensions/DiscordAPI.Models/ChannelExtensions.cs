@@ -58,6 +58,36 @@ namespace DiscordAPI.Models.Channels
         }
 
         /// <summary>
+        /// Gets a value indicating whether or not the channel is in a DM.
+        /// </summary>
+        /// <param name="channel">The channel to check.</param>
+        /// <returns>Whether or not the channel is in a DM.</returns>
+        public static bool IsPrivateChannel(this Channel channel)
+        {
+            return channel.IsDirectChannel() || channel.IsGroupChannel();
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether or not the channel is in a DM.
+        /// </summary>
+        /// <param name="channel">The channel to check.</param>
+        /// <returns>Whether or not the channel is in a DM.</returns>
+        public static bool IsGuildChannel(this Channel channel)
+        {
+            return !channel.IsPrivateChannel();
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether or not the channel has typing contents.
+        /// </summary>
+        /// <param name="channel">The channel to check.</param>
+        /// <returns>Whether or not the channel has typing contents.</returns>
+        public static bool IsTypingChannel(this Channel channel)
+        {
+            return channel.IsTextChannel() || channel.IsDirectChannel() || channel.IsGroupChannel();
+        }
+
+        /// <summary>
         /// Gets the GuildId of the channel.
         /// </summary>
         /// <param name="channel">The channel to check.</param>

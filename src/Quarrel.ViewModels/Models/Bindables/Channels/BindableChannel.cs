@@ -156,29 +156,14 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         }
 
         /// <summary>
-        /// Gets a value indicating whether or not the channel is a guild channel.
-        /// </summary>
-        public bool IsGuildChannel => !IsPrivateChannel;
-
-        /// <summary>
         /// Gets the model as a <see cref="GuildChannel"/>.
         /// </summary>
         public GuildChannel AsGuildChannel => Model as GuildChannel;
 
         /// <summary>
-        /// Gets a value indicating whether or not the channel is in a DM.
-        /// </summary>
-        public bool IsPrivateChannel => IsDirectChannel || IsGroupChannel;
-
-        /// <summary>
         /// Gets the Model as a <see cref="DirectMessageChannel"/>.
         /// </summary>
         public DirectMessageChannel AsDMChannel => Model as DirectMessageChannel;
-
-        /// <summary>
-        /// Gets a value indicating whether or not the channel has typing contents.
-        /// </summary>
-        public bool IsTypingChannel => IsCategory || IsTextChannel || IsDirectChannel || IsGroupChannel;
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the channel is muted.
@@ -199,15 +184,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         /// <summary>
         /// Gets the current user's permissions in this channel.
         /// </summary>
-        /// <remarks>
-        /// Guild Permsissions
-        ///  Denies of @everyone.
-        ///  Allows of @everyone.
-        ///  All Role Denies.
-        ///  All Role Allows.
-        ///  Member denies.
-        ///  Member allows.
-        /// </remarks>
         public Permissions Permissions
         {
             get
@@ -217,54 +193,17 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
                     return _permissions;
                 }
 
-                if (Model is GuildChannel)
+                if (Model is GuildChannel guildChannel)
                 {
-                    Permissions perms = Guild.Permissions.Clone();
+                    Permissions root = null; // TODO: Get guild permissions
 
-                    if (ParentId != null && ParentId != Model.Id)
-                    {
-                        perms = ChannelsService.GetChannel(ParentId).Permissions.Clone();
-                    }
+                    IEnumerable<Overwrite> overwrites =
+                        guildChannel.PermissionOverwrites.Where(x =>
+                        (x.Type == "role" &&
+                        (x.Id == GuildId || GuildsService.GetGuildMember(CurrentUsersService.CurrentUser.Id, GuildId).Roles.Contains(x.Id)))
+                        || (x.Type == "member" && x.Id == CurrentUsersService.CurrentUser.Id));
 
-                    var user = Guild.Members.FirstOrDefault(x => x.User.Id == CurrentUsersService.CurrentUser.Id);
-
-                    GuildPermission roleDenies = 0;
-                    GuildPermission roleAllows = 0;
-                    GuildPermission memberDenies = 0;
-                    GuildPermission memberAllows = 0;
-                    foreach (Overwrite overwrite in (Model as GuildChannel).PermissionOverwrites)
-                    {
-                        // @everyone Id is equal to GuildId
-                        if (overwrite.Type == "role" && overwrite.Id == GuildId)
-                        {
-                            perms.AddDenies((GuildPermission)overwrite.Deny);
-                            perms.AddAllows((GuildPermission)overwrite.Allow);
-                        }
-                        else if (overwrite.Type == "role" && user.Roles.Contains(overwrite.Id))
-                        {
-                            roleDenies |= (GuildPermission)overwrite.Deny;
-                            roleAllows |= (GuildPermission)overwrite.Allow;
-                        }
-                        else if (overwrite.Type == "member" && overwrite.Id == user.User.Id)
-                        {
-                            memberDenies |= (GuildPermission)overwrite.Deny;
-                            memberAllows |= (GuildPermission)overwrite.Allow;
-                        }
-                    }
-
-                    perms.AddDenies(roleDenies);
-                    perms.AddAllows(roleAllows);
-                    perms.AddDenies(memberDenies);
-                    perms.AddAllows(memberAllows);
-
-                    // If owner add admin
-                    if (Guild.OwnerId == user.User.Id)
-                    {
-                        perms.AddAllows(GuildPermission.Administrator);
-                    }
-
-                    _permissions = perms;
-                    return perms;
+                    return _permissions = Permissions.CalculatePermissionOverwrites(root, overwrites, Guild.OwnerId == CurrentUsersService.CurrentUser.Id);
                 }
 
                 return new Permissions(int.MaxValue);
@@ -287,7 +226,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         {
             get
             {
-                if (IsCategory)
+                if (Model.IsCategory())
                 {
                     return ((ulong)Position + 1) << 32;
                 }
@@ -295,7 +234,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
                 {
                     return
                         ((ulong)ParentPostion + 1) << 32 |
-                        ((uint)(IsVoiceChannel ? 1 : 0) << 31) |
+                        ((uint)(Model.IsVoiceChannel() ? 1 : 0) << 31) |
                         (uint)(Position + 1);
                 }
             }
@@ -304,12 +243,12 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         /// <summary>
         /// Gets the id of the guild parenting the channel.
         /// </summary>
-        public string GuildId => AsGuildChannel?.GuildId ?? "DM";
+        public string GuildId => Model.GuildId();
 
         /// <summary>
         /// Gets the id of the parent category.
         /// </summary>
-        public string ParentId => Model is GuildChannel gcModel ? (IsCategory ? gcModel.Id : gcModel.ParentId) : null;
+        public string ParentId => Model is GuildChannel gcModel ? (Model.IsCategory() ? gcModel.Id : gcModel.ParentId) : null;
 
         /// <summary>
         /// Gets the position within the category of the channel.
@@ -342,7 +281,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         {
             get
             {
-                if (!IsDirectChannel && !IsGroupChannel)
+                if (!Model.IsDirectChannel() && !Model.IsGroupChannel())
                 {
                     return null;
                 }
@@ -395,12 +334,12 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
             {
                 bool hidden = false;
 
-                if (IsCategory)
+                if (Model.IsCategory())
                 {
                     return !SettingsService.Roaming.GetValue<bool>(SettingKeys.ShowNoPermssions) &&
                         !Guild.Channels
                         .Where(x => x.Id != Model.Id && x.ParentId == Model.Id)
-                        .Any(x => x.Permissions.ReadMessages);
+                        .Any(x => _channelsService.GetChannelPermissions(x.Id).ReadMessages);
                 }
 
                 if (_collapsed)
@@ -442,11 +381,11 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
             {
                 if (Model is DirectMessageChannel dmModel)
                 {
-                    if (IsDirectChannel)
+                    if (Model.IsDirectChannel())
                     {
                         return !string.IsNullOrEmpty(dmModel.Users[0].Avatar);
                     }
-                    else if (IsGroupChannel)
+                    else if (Model.IsGroupChannel())
                     {
                         return dmModel.IconUri(false) == null;
                     }
@@ -499,11 +438,11 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
             {
                 if (Model is DirectMessageChannel dmModel)
                 {
-                    if (IsDirectChannel)
+                    if (Model.IsDirectChannel())
                     {
                         return dmModel.Users[0].AvatarUrl;
                     }
-                    else if (IsGroupChannel)
+                    else if (Model.IsGroupChannel())
                     {
                         // TODO: detect theme
                         return dmModel.IconUrl(true, true);
@@ -527,7 +466,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         /// </summary>
         public bool ShowIconBackdrop
         {
-            get => IsDirectChannel && !HasIcon;
+            get => Model.IsDirectChannel() && !HasIcon;
         }
 
         /// <summary>
@@ -542,7 +481,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
         {
             get
             {
-                if (Permissions.ReadMessages && (IsTextChannel || IsPrivateChannel || IsGroupChannel) && !string.IsNullOrEmpty(Model.LastMessageId))
+                if (Permissions.ReadMessages && Model.IsTypingChannel() && !string.IsNullOrEmpty(Model.LastMessageId))
                 {
                     if (ReadState != null)
                     {

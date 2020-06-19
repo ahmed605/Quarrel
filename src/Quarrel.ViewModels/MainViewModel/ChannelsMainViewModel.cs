@@ -38,13 +38,13 @@ namespace Quarrel.ViewModels
             if (channel.Model.IsCategory())
             {
                 bool newState = !channel.Collapsed;
-                for (int i = CurrentGuild.Channels.IndexOf(channel);
-                    i < CurrentGuild.Channels.Count
-                    && CurrentGuild.Channels[i] != null
-                    && CurrentGuild.Channels[i].ParentId == channel.Model.Id;
+                for (int i = BindableChannels.IndexOf(channel);
+                    i < BindableChannels.Count
+                    && BindableChannels[i] != null
+                    && BindableChannels[i].ParentId == channel.Model.Id;
                     i++)
                 {
-                    CurrentGuild.Channels[i].Collapsed = newState;
+                    BindableChannels[i].Collapsed = newState;
                 }
             }
             else if (channel.Model.IsVoiceChannel())
@@ -65,7 +65,7 @@ namespace Quarrel.ViewModels
                     MessengerInstance.Send(new ChannelNavigateMessage(channel));
 
                     _analyticsService.Log(
-                        channel.IsPrivateChannel
+                        channel.Model.IsPrivateChannel()
                             ? Constants.Analytics.Events.OpenDMChannel
                             : Constants.Analytics.Events.OpenGuildChannel,
                         ("channel-id", channel.Model.Id),

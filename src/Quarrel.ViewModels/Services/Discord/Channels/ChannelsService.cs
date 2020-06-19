@@ -15,6 +15,7 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
         private IDictionary<string, Channel> _allChannels = new ConcurrentDictionary<string, Channel>();
         private IDictionary<string, ChannelOverride> _channelSettings = new ConcurrentDictionary<string, ChannelOverride>();
         private IDictionary<string, ReadState> _readStates = new ConcurrentDictionary<string, ReadState>();
+        private IDictionary<string, Permissions> _permissions = new ConcurrentDictionary<string, Permissions>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelsService"/> class.
@@ -37,18 +38,24 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
         /// <inheritdoc/>
         public void AddOrUpdateChannel(Channel channel)
         {
-            if (channelId == null)
-            {
-                return;
-            }
-
-            _allChannels.AddOrUpdate(channelId, channel);
+            _allChannels.AddOrUpdate(channel.Id, channel);
         }
 
         /// <inheritdoc/>
         public void RemoveChannel(string channelId)
         {
             _allChannels.Remove(channelId);
+        }
+
+        /// <inheritdoc/>
+        public Permissions GetChannelPermissions(string channelId)
+        {
+            if (channelId == null)
+            {
+                return null;
+            }
+
+            return _permissions.TryGetValue(channelId, out Permissions perms) ? perms : null;
         }
 
         /// <inheritdoc/>

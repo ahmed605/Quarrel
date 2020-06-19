@@ -57,8 +57,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
         /// <param name="model">The base <see cref="Guild"/> object.</param>
         public BindableGuild([NotNull] Guild model) : base(model)
         {
-            _channels = new ObservableCollection<BindableChannel>();
-
             MessengerInstance.Register<GatewayGuildUpdatedMessage>(this, m =>
             {
                 if (m.Guild.Id == Model.Id)
@@ -236,7 +234,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
         /// <summary>
         /// Gets a value indicating whether or not the current user owns the guild.
         /// </summary>
-        public bool IsOwner { get => CurrentUsersService.CurrentUser.Model.Id == Model.OwnerId; }
+        public bool IsOwner { get => CurrentUsersService.CurrentUser.Id == Model.OwnerId; }
 
         /// <summary>
         /// Gets the current user's permissions in the guild.
@@ -255,7 +253,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
                     return _permissions;
                 }
 
-                if (Model.Id == "DM" || Model.OwnerId == CurrentUsersService.CurrentUser.Model.Id)
+                if (Model.Id == "DM" || Model.OwnerId == CurrentUsersService.CurrentUser.Id)
                 {
                     return new Permissions(int.MaxValue);
                 }
@@ -264,7 +262,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
                 Permissions perms = new Permissions(Model.Roles.FirstOrDefault(x => x.Id == Model.Id).Permissions);
 
                 // TODO: Easier access to CurrentGuildMember
-                BindableGuildMember member = new BindableGuildMember(Model.Members.FirstOrDefault(x => x.User.Id == CurrentUsersService.CurrentUser.Model.Id), Model.Id);
+                BindableGuildMember member = new BindableGuildMember(Model.Members.FirstOrDefault(x => x.User.Id == CurrentUsersService.CurrentUser.Id), Model.Id);
 
                 if (member == null)
                 {
@@ -287,8 +285,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
         /// <summary>
         /// Gets a command that navigates to the page for adding channels to this guild.
         /// </summary>
-        public RelayCommand AddChannelCommand =>
-        _addChanneleCommand ?? (_addChanneleCommand = new RelayCommand(() =>
+        public RelayCommand AddChannelCommand => _addChanneleCommand ?? (_addChanneleCommand = new RelayCommand(() =>
         {
             SubFrameNavigationService.NavigateTo("AddChannelPage", Model);
         }));

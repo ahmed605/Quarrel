@@ -274,7 +274,7 @@ namespace Quarrel.ViewModels
         /// </summary>
         public void ScrollToAndEditLast()
         {
-            var userLastMessage = BindableMessages.LastOrDefault(x => x.Model.User.Id == _currentUserService.CurrentUser.Model.Id);
+            var userLastMessage = BindableMessages.LastOrDefault(x => x.Model.User.Id == _currentUserService.CurrentUser.Id);
             if (userLastMessage != null)
             {
                 userLastMessage.IsEditing = true;
@@ -338,7 +338,12 @@ namespace Quarrel.ViewModels
 
             MessengerInstance.Register<DiscordMessageRecievedMessage>(this, m =>
             {
-                // TODO: Handle incoming messages
+                if (BindableChannels.Any(x => x.Model.Id == m.Message.ChannelId))
+                {
+
+                }
+
+                // TODO: Handle guild update.
             });
 
             // Handles message deletion

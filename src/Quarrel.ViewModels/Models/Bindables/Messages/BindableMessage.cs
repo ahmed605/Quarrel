@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
+using DiscordAPI.Models.Channels;
 using DiscordAPI.Models.Messages;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Ioc;
@@ -79,14 +80,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Messages
             ConvertReactions();
             FindInvites();
             CalculateMentions();
-
-            Messenger.Default.Register<GatewayGuildMembersChunkMessage>(this, m =>
-            {
-                if (m.GuildMembersChunk.GuildId == Channel.GuildId)
-                {
-                    _author = GuildsService.GetGuildMember(Model.User.Id, Channel.GuildId);
-                }
-            });
         }
 
         /// <summary>
@@ -140,29 +133,29 @@ namespace Quarrel.ViewModels.Models.Bindables.Messages
         /// </summary>
         public bool MentionsMe => Model.MentionEveryone ||
             (Model.Mentions != null &&
-            Model.Mentions.Any(x => x.Id == CurrentUsersService.CurrentUser.Model.Id));
+            Model.Mentions.Any(x => x.Id == CurrentUsersService.CurrentUser.Id));
 
         /// <summary>
         /// Gets a value indicating whether or not the pin button should be shown in the flyout.
         /// </summary>
-        public bool ShowPin => !Model.Pinned && (Channel.Permissions.ManageMessages || Channel.IsDirectChannel);
+        public bool ShowPin => !Model.Pinned && (Channel.Permissions.ManageMessages || Channel.IsDirectChannel());
 
         /// <summary>
         /// Gets a value indicating whether or not the unpin button should be shown in the flyout.
         /// </summary>
-        public bool ShowUnpin => Model.Pinned && (Channel.Permissions.ManageMessages || Channel.IsDirectChannel);
+        public bool ShowUnpin => Model.Pinned && (Channel.Permissions.ManageMessages || Channel.IsDirectChannel());
 
         /// <summary>
         /// Gets a value indicating whether or not the edit button should be shown in the flyout.
         /// </summary>
-        public bool ShowEdit => Model.User.Id == SimpleIoc.Default.GetInstance<ICurrentUserService>().CurrentUser.Model.Id;
+        public bool ShowEdit => Model.User.Id == SimpleIoc.Default.GetInstance<ICurrentUserService>().CurrentUser.Id;
 
         /// <summary>
         /// Gets a value indicating whether or not the delete button should be shown in the flyout.
         /// </summary>
         public bool ShowDelete =>
-            Model.User.Id == SimpleIoc.Default.GetInstance<ICurrentUserService>().CurrentUser.Model.Id
-            || (Channel.Permissions.ManageMessages && !Channel.IsDirectChannel);
+            Model.User.Id == SimpleIoc.Default.GetInstance<ICurrentUserService>().CurrentUser.Id
+            || (Channel.Permissions.ManageMessages && !Channel.IsDirectChannel());
 
         /// <summary>
         /// Gets or sets the <see cref="BindableGuildMember"/> of the author.
@@ -265,7 +258,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Messages
         /// </summary>
         public ObservableCollection<IEmbed> BindableEmbeds { get; set; } = new ObservableCollection<IEmbed>();
 
-        private BindableChannel Channel => ChannelsService.GetChannel(Model.ChannelId);
+        private Channel Channel => ChannelsService.GetChannel(Model.ChannelId);
 
         private IAnalyticsService AnalyticsService => _analyticsService ?? (_analyticsService = SimpleIoc.Default.GetInstance<IAnalyticsService>());
 
@@ -357,14 +350,14 @@ namespace Quarrel.ViewModels.Models.Bindables.Messages
         {
             UsersMentioned = Model.Mentions?.ToDictionary(
                 x => x.Id,
-                x => (x.Username, GuildsService.GetGuildMember(x.Id, GuildsService.CurrentGuild.Model.Id)?.TopRole?.Color ?? 0x18363));
+                x => (x.Username, GuildsService.GetGuildMember(x.Id, Channel.GuildId())?.TopRole?.Color ?? 0x18363));
 
             IDictionary<string, (string, int)> rolesMentionedDict = new Dictionary<string, (string, int)>();
             if (Model.MentionRoles != null)
             {
                 foreach (string roleId in Model.MentionRoles)
                 {
-                    var role = GuildsService.CurrentGuild.Model.Roles.FirstOrDefault(x => x.Id == roleId);
+                    var role = _guildsService.GetGuild(Model.ChannelId).Roles.FirstOrDefault(x => x.Id == roleId);
                     if (role != null)
                     {
                         rolesMentionedDict.Add(roleId, (role.Name, role.Color));
@@ -376,9 +369,9 @@ namespace Quarrel.ViewModels.Models.Bindables.Messages
 
             IDictionary<string, string> channelsMentionedDict = new Dictionary<string, string>();
 
-            foreach (var channel in GuildsService.CurrentGuild.Channels)
+            foreach (var channel in _guildsService.GetGuild(Model.ChannelId).Channels)
             {
-                channelsMentionedDict[channel.Model.Id] = channel.Model.Name;
+                channelsMentionedDict[channel.Id] = channel.Name;
             }
 
             if (Model.MentionChannels != null)

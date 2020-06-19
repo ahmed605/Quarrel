@@ -26,8 +26,15 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
         /// <summary>
         /// Removes a channel from the channel list.
         /// </summary>
-        /// <param name="channelId">The channel's id</param>
+        /// <param name="channelId">The channel's id.</param>
         void RemoveChannel(string channelId);
+
+        /// <summary>
+        /// Gets the <see cref="Permissions"/> for a channel.
+        /// </summary>
+        /// <param name="channelId">The channel's id.</param>
+        /// <returns>The <see cref="Permissions"/> of the channel.</returns>
+        Permissions GetChannelPermissions(string channelId);
 
         /// <summary>
         /// Gets a channel's settings.

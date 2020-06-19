@@ -41,6 +41,8 @@ namespace DiscordAPI.Models
 
     public class Permissions
     {
+        private GuildPermission _perms;
+
         #region Constructors
 
         public Permissions(int perms)
@@ -235,6 +237,68 @@ namespace DiscordAPI.Models
 
         #region Methods
 
+        /// <summary>
+        /// Calculates permissions with overwrites.
+        /// </summary>
+        /// <param name="root">The root permissions.</param>
+        /// <param name="overwrites">The overwrites to apply.</param>
+        /// <param name="owner">Whether or not the user is the owner.</param>
+        /// <returns>The new permissions.</returns>
+        /// <remarks>
+        /// Guild Permsissions
+        ///  Denies of @everyone.
+        ///  Allows of @everyone.
+        ///  All Role Denies.
+        ///  All Role Allows.
+        ///  Member denies.
+        ///  Member allows.
+        /// </remarks>
+        public static Permissions CalculatePermissionOverwrites(Permissions root, IEnumerable<Overwrite> overwrites, bool owner)
+        {
+            Permissions perms = root.Clone();
+
+            if (overwrites != null)
+            {
+                GuildPermission roleDenies = 0;
+                GuildPermission roleAllows = 0;
+                GuildPermission memberDenies = 0;
+                GuildPermission memberAllows = 0;
+
+                foreach (Overwrite overwrite in overwrites)
+                {
+                    // @everyone Id is equal to GuildId
+                    if (overwrite.Type == "role")
+                    {
+                        perms.AddDenies((GuildPermission)overwrite.Deny);
+                        perms.AddAllows((GuildPermission)overwrite.Allow);
+                    }
+                    else if (overwrite.Type == "role")
+                    {
+                        roleDenies |= (GuildPermission)overwrite.Deny;
+                        roleAllows |= (GuildPermission)overwrite.Allow;
+                    }
+                    else if (overwrite.Type == "member")
+                    {
+                        memberDenies |= (GuildPermission)overwrite.Deny;
+                        memberAllows |= (GuildPermission)overwrite.Allow;
+                    }
+                }
+
+                perms.AddDenies(roleDenies);
+                perms.AddAllows(roleAllows);
+                perms.AddDenies(memberDenies);
+                perms.AddAllows(memberAllows);
+            }
+
+            // If owner add admin
+            if (owner)
+            {
+                perms.AddAllows(GuildPermission.Administrator);
+            }
+
+            return perms;
+        }
+
         public void AddAllows(GuildPermission set)
         {
             _perms |= set;
@@ -320,8 +384,6 @@ namespace DiscordAPI.Models
         }
 
         #endregion
-
-        private GuildPermission _perms;
     }
 
     public class PermissionDifference

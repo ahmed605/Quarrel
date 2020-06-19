@@ -2,16 +2,13 @@
 
 using DiscordAPI.API.User.Models;
 using DiscordAPI.Models;
-using DiscordAPI.Models.Channels;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Ioc;
 using GalaSoft.MvvmLight.Messaging;
 using JetBrains.Annotations;
 using Quarrel.ViewModels.Helpers;
 using Quarrel.ViewModels.Messages.Gateway;
-using Quarrel.ViewModels.Messages.Navigation;
 using Quarrel.ViewModels.Models.Bindables.Abstract;
-using Quarrel.ViewModels.Models.Bindables.Channels;
 using Quarrel.ViewModels.Models.Interfaces;
 using Quarrel.ViewModels.Services.Analytics;
 using Quarrel.ViewModels.Services.Cache;
@@ -121,11 +118,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Users
             };
 
             var channel = await DiscordService.UserService.CreateDirectMessageChannelForCurrentUser(createDM);
-
-            if (ChannelsService.GetChannel(channel.Id) == null)
-            {
-                ChannelsService.AddOrUpdateChannel(channel.Id, channel);
-            }
 
             // TODO: Navigate to a channel
         });
