@@ -32,7 +32,7 @@ namespace Quarrel.ViewModels
             {
                 Task.Run(() =>
                 {
-                    if (_guildsService.CurrentGuild.IsDM)
+                    if (CurrentGuild.IsDM)
                     {
                         return;
                     }
@@ -141,7 +141,7 @@ namespace Quarrel.ViewModels
             // Handles VoiceState change for current user
             MessengerInstance.Register<GatewayVoiceStateUpdateMessage>(this, m =>
             {
-                if (m.VoiceState.UserId == _discordService.CurrentUser.Id)
+                if (m.VoiceState.UserId == _currentUserService.CurrentUser.Id)
                 {
                     _dispatcherHelper.CheckBeginInvokeOnUi(() => VoiceState = m.VoiceState);
                 }
@@ -221,7 +221,7 @@ namespace Quarrel.ViewModels
                                         {
                                             CurrentBindableMembers.Insert(op.Index, new BindableGuildMember(op.Item.Member, guildId)
                                             {
-                                                IsOwner = op.Item.Member.User.Id == _guildsService.GetGuild(_currentGuild.Model.Id).Model.OwnerId,
+                                                IsOwner = op.Item.Member.User.Id == _guildsService.GetGuild(_currentGuild.Model.Id).OwnerId,
                                             });
                                             _presenceService.AddOrUpdateUserPrecense(op.Item.Member.User.Id, op.Item.Member.Presence);
                                         }
@@ -263,7 +263,7 @@ namespace Quarrel.ViewModels
             {
                 BindableGuildMember bGuildMember = new BindableGuildMember(item.Member, _currentGuild.Model.Id)
                 {
-                    IsOwner = item.Member.User.Id == _guildsService.GetGuild(_currentGuild.Model.Id).Model.OwnerId,
+                    IsOwner = item.Member.User.Id == _guildsService.GetGuild(_currentGuild.Model.Id).OwnerId,
                 };
                 CurrentBindableMembers[index] = bGuildMember;
                 _presenceService.AddOrUpdateUserPrecense(item.Member.User.Id, item.Member.Presence);

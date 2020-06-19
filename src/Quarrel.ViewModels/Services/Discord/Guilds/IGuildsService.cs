@@ -32,6 +32,13 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
         void RemoveGuild(string guildId);
 
         /// <summary>
+        /// Gets the <see cref="Permissions"/> for a guild.
+        /// </summary>
+        /// <param name="guildId">The id of the guild to get the permissions for.</param>
+        /// <returns>The <see cref="Permissions"/> for a guild.</returns>
+        Permissions GetGuildPermissions(string guildId);
+
+        /// <summary>
         /// Adds or updates a <see cref="GuildChannel"/> in its guild.
         /// </summary>
         /// <param name="channel">The <see cref="GuildChannel"/>.</param>
@@ -97,6 +104,6 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
         /// <param name="guildId">The guild to query.</param>
         /// <param name="take">The max number of members to return.</param>
         /// <returns>The top matches for members by the <paramref name="query"/> in <paramref name="guildId"/>.</returns>
-        IEnumerable<GuildMember> QueryGuildMembers(string query, string guildId, int take= 10);
+        IEnumerable<GuildMember> QueryGuildMembers(string query, string guildId, int take = 10);
     }
 }

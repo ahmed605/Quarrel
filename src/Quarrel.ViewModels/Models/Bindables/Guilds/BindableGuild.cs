@@ -5,15 +5,12 @@ using DiscordAPI.Models.Guilds;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Ioc;
 using JetBrains.Annotations;
-using Quarrel.ViewModels.Helpers;
 using Quarrel.ViewModels.Messages.Gateway;
 using Quarrel.ViewModels.Messages.Gateway.Guild;
 using Quarrel.ViewModels.Messages.Services.Settings;
 using Quarrel.ViewModels.Models.Bindables.Abstract;
-using Quarrel.ViewModels.Models.Bindables.Channels;
 using Quarrel.ViewModels.Models.Bindables.Users;
 using Quarrel.ViewModels.Models.Interfaces;
-using Quarrel.ViewModels.Services.Analytics;
 using Quarrel.ViewModels.Services.Clipboard;
 using Quarrel.ViewModels.Services.Discord.CurrentUser;
 using Quarrel.ViewModels.Services.Discord.Guilds;
@@ -21,7 +18,6 @@ using Quarrel.ViewModels.Services.Discord.Rest;
 using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Navigation;
 using Quarrel.ViewModels.Services.Settings;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 
@@ -32,7 +28,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
     /// </summary>
     public class BindableGuild : BindableModelBase<Guild>, IGuildListItem
     {
-        private Permissions _permissions = null;
         private int _position;
         private bool _selected;
         private bool _isCollapsed;

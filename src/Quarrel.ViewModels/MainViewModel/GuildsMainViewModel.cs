@@ -149,7 +149,7 @@ namespace Quarrel.ViewModels
             MessengerInstance.Register<GuildNavigateMessage>(this, m =>
             {
                 BindableChannel channel =
-                m.Guild.Model.Channels.FirstOrDefault(x => x.IsTextChannel() && x.Permissions.ReadMessages);
+                new BindableChannel(m.Guild.Model.Channels.FirstOrDefault(x => x.IsTextChannel() && _channelsService.GetChannelPermissions(x.Id).ReadMessages));
                 BindableGuildMember currentGuildMember;
 
                 if (!m.Guild.IsDM)

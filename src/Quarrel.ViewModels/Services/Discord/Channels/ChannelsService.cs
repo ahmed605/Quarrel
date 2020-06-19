@@ -4,6 +4,7 @@ using DiscordAPI.Models;
 using DiscordAPI.Models.Channels;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Quarrel.ViewModels.Services.Discord.Channels
 {
@@ -39,6 +40,19 @@ namespace Quarrel.ViewModels.Services.Discord.Channels
         public void AddOrUpdateChannel(Channel channel)
         {
             _allChannels.AddOrUpdate(channel.Id, channel);
+
+            if (channel is GuildChannel guildChannel)
+            {
+                Permissions root = null; // TODO: Get guild permissions
+
+                IEnumerable<Overwrite> overwrites =
+                    guildChannel.PermissionOverwrites.Where(x =>
+                    (x.Type == "role" &&
+                    (x.Id == guildChannel.GuildId || GuildsService.GetGuildMember(CurrentUsersService.CurrentUser.Id, GuildId).Roles.Contains(x.Id)))
+                    || (x.Type == "member" && x.Id == CurrentUsersService.CurrentUser.Id));
+
+                _permissions.Add(channel.Id, Permissions.CalculatePermissionOverwrites(root, overwrites, Guild.OwnerId == CurrentUsersService.CurrentUser.Id));
+            }
         }
 
         /// <inheritdoc/>

@@ -193,19 +193,6 @@ namespace Quarrel.ViewModels.Models.Bindables.Channels
                     return _permissions;
                 }
 
-                if (Model is GuildChannel guildChannel)
-                {
-                    Permissions root = null; // TODO: Get guild permissions
-
-                    IEnumerable<Overwrite> overwrites =
-                        guildChannel.PermissionOverwrites.Where(x =>
-                        (x.Type == "role" &&
-                        (x.Id == GuildId || GuildsService.GetGuildMember(CurrentUsersService.CurrentUser.Id, GuildId).Roles.Contains(x.Id)))
-                        || (x.Type == "member" && x.Id == CurrentUsersService.CurrentUser.Id));
-
-                    return _permissions = Permissions.CalculatePermissionOverwrites(root, overwrites, Guild.OwnerId == CurrentUsersService.CurrentUser.Id);
-                }
-
                 return new Permissions(int.MaxValue);
             }
         }

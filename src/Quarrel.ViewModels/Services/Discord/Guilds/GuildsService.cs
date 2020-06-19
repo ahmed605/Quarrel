@@ -22,6 +22,8 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
 
         private IDictionary<string, GuildSetting> _guildSettings = new ConcurrentDictionary<string, GuildSetting>();
 
+        private IDictionary<string, Permissions> _guildPermissions = new ConcurrentDictionary<string, Permissions>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="GuildsService"/> class.
         /// </summary>
@@ -59,6 +61,17 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
         }
 
         /// <inheritdoc/>
+        public Permissions GetGuildPermissions(string guildId)
+        {
+            if (guildId == null)
+            {
+                return null;
+            }
+
+            return _guildPermissions.TryGetValue(guildId, out Permissions perms) ? perms : null;
+        }
+
+        /// <inheritdoc/>
         public void AddOrUpdateChannel(GuildChannel channel)
         {
             Guild guild = _allGuilds[channel.GuildId];
@@ -66,7 +79,8 @@ namespace Quarrel.ViewModels.Services.Discord.Guilds
             if (index == -1)
             {
                 guild.Channels.Add(channel);
-            } else
+            }
+            else
             {
                 guild.Channels.RemoveAt(index);
                 guild.Channels.Add(channel);

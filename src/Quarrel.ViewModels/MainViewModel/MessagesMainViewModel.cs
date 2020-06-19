@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Quarrel. All rights reserved.
 
 using DiscordAPI.Models;
+using DiscordAPI.Models.Channels;
 using DiscordAPI.Models.Messages;
 using GalaSoft.MvvmLight.Command;
 using JetBrains.Annotations;
@@ -294,8 +295,8 @@ namespace Quarrel.ViewModels
                     channel.UpdateLMID(m.Message.Id);
 
                     // Updates Mention count
-                    if (channel.IsDirectChannel || channel.IsGroupChannel ||
-                        m.Message.Mentions.Any(x => x.Id == _currentUserService.CurrentUser.Model.Id) ||
+                    if (channel.Model.IsDirectChannel() || channel.Model.IsGroupChannel() ||
+                        m.Message.Mentions.Any(x => x.Id == _currentUserService.CurrentUser.Id) ||
                         m.Message.MentionEveryone)
                     {
                         _dispatcherHelper.CheckBeginInvokeOnUi(() =>
@@ -306,7 +307,7 @@ namespace Quarrel.ViewModels
                             }
 
                             channel.ReadState.MentionCount++;
-                            if (channel.IsDirectChannel || channel.IsGroupChannel)
+                            if (channel.Model.IsDirectChannel() || channel.Model.IsGroupChannel())
                             {
                                 int oldIndex = _guildsService.GetGuild("DM").Channels.IndexOf(channel);
                                 if (oldIndex >= 0)
@@ -340,7 +341,7 @@ namespace Quarrel.ViewModels
             {
                 if (BindableChannels.Any(x => x.Model.Id == m.Message.ChannelId))
                 {
-
+                    // TODO: Handle message recieving.
                 }
 
                 // TODO: Handle guild update.
