@@ -190,7 +190,7 @@ namespace Quarrel.ViewModels.Models.Bindables.Guilds
         /// <summary>
         /// Gets the url for the guild icon.
         /// </summary>
-        public string IconUrl => $"https://cdn.discordapp.com/icons/{Model.Id}/{Model.Icon}.png?size=128";
+        public string IconUrl => Model.GetIconUrl();
 
         /// <summary>
         /// Gets a value indicating whether or not the guild has an icon.

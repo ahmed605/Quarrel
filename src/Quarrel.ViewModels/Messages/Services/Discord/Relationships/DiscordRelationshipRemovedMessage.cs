@@ -2,18 +2,18 @@
 
 using DiscordAPI.Models;
 
-namespace Quarrel.ViewModels.Messages.Gateway.Relationships
+namespace Quarrel.ViewModels.Messages.Services.Discord.Relationships
 {
     /// <summary>
-    /// A message indicating a removed relationship.
+    /// A message to mark a relationship being removed.
     /// </summary>
-    public class GatewayRelationshipRemovedMessage
+    public class DiscordRelationshipRemovedMessage
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="GatewayRelationshipRemovedMessage"/> class.
+        /// Initializes a new instance of the <see cref="DiscordRelationshipRemovedMessage"/> class.
         /// </summary>
         /// <param name="friend">The relationship data.</param>
-        public GatewayRelationshipRemovedMessage(Friend friend)
+        public DiscordRelationshipRemovedMessage(Friend friend)
         {
             Friend = friend;
         }

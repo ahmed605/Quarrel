@@ -15,12 +15,10 @@ using JetBrains.Annotations;
 using Quarrel.ViewModels.Helpers;
 using Quarrel.ViewModels.Messages;
 using Quarrel.ViewModels.Messages.Gateway;
-using Quarrel.ViewModels.Messages.Gateway.Channels;
-using Quarrel.ViewModels.Messages.Gateway.Guild;
-using Quarrel.ViewModels.Messages.Gateway.Relationships;
 using Quarrel.ViewModels.Messages.Gateway.Voice;
 using Quarrel.ViewModels.Messages.Navigation;
 using Quarrel.ViewModels.Messages.Services.Discord.Messages;
+using Quarrel.ViewModels.Messages.Services.Discord.Relationships;
 using Quarrel.ViewModels.Services.Analytics;
 using Quarrel.ViewModels.Services.Cache;
 using Quarrel.ViewModels.Services.Discord.Channels;
@@ -29,10 +27,8 @@ using Quarrel.ViewModels.Services.Discord.Friends;
 using Quarrel.ViewModels.Services.Discord.Guilds;
 using Quarrel.ViewModels.Services.Discord.Presence;
 using Quarrel.ViewModels.Services.Discord.Voice;
-using Quarrel.ViewModels.ViewModels.Messages.Gateway;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Quarrel.ViewModels.Services.Gateway
@@ -466,21 +462,23 @@ namespace Quarrel.ViewModels.Services.Gateway
         {
             _friendsService.AddOrUpdateFriend(e.EventData.Id, e.EventData);
 
-            // TODO: Send message to handle UI
+            Messenger.Default.Send(new DiscordRelationshipAddedMessage(e.EventData));
         }
 
         private void Gateway_RelationShipRemoved(object sender, GatewayEventArgs<Friend> e)
         {
-            _friendsService.AddOrUpdateFriend(e.EventData.Id, e.EventData);
+            Friend currentFriend = _friendsService.GetFriend(e.EventData.Id);
+            _friendsService.RemoveFriend(e.EventData.Id);
 
-            // TODO: Send message to handle UI
+            Messenger.Default.Send(new DiscordRelationshipRemovedMessage(currentFriend));
         }
 
         private void Gateway_RelationShipUpdated(object sender, GatewayEventArgs<Friend> e)
         {
+            Friend currentFriend = _friendsService.GetFriend(e.EventData.Id);
             _friendsService.AddOrUpdateFriend(e.EventData.Id, e.EventData);
 
-            // TODO: Send message to handle UI
+            Messenger.Default.Send(new DiscordRelationshipUpdatedMessage(currentFriend));
         }
 
         private void Gateway_SessionReplaced(object sender, GatewayEventArgs<SessionReplace[]> e)

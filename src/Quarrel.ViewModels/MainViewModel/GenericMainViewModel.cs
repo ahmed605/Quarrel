@@ -8,6 +8,7 @@ using Quarrel.ViewModels.Helpers;
 using Quarrel.ViewModels.Messages;
 using Quarrel.ViewModels.Messages.Gateway;
 using Quarrel.ViewModels.Messages.Gateway.Relationships;
+using Quarrel.ViewModels.Messages.Services.Discord.Relationships;
 using Quarrel.ViewModels.Models.Bindables.Users;
 using Quarrel.ViewModels.Services.Analytics;
 using Quarrel.ViewModels.Services.Cache;
@@ -23,6 +24,7 @@ using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Gateway;
 using Quarrel.ViewModels.Services.Navigation;
 using Quarrel.ViewModels.Services.Settings;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -157,6 +159,24 @@ namespace Quarrel.ViewModels
         });
 
         /// <summary>
+        /// Logins in with cached token or opens login page.
+        /// </summary>
+        public async void Login()
+        {
+            string token =
+                (string)await _cacheService.Persistent.Roaming.TryGetValueAsync<object>(
+                    Constants.Cache.Keys.AccessToken);
+            if (string.IsNullOrEmpty(token))
+            {
+                _subFrameNavigationService.NavigateTo("LoginPage");
+            }
+            else
+            {
+                await _discordService.Login(token);
+            }
+        }
+
+        /// <summary>
         /// Register for MVVM Messenger messages in MainViewModel.
         /// </summary>
         private void RegisterGenericMessages()
@@ -194,14 +214,13 @@ namespace Quarrel.ViewModels
                 });
             });
 
-            MessengerInstance.Register<GatewayRelationshipAddedMessage>(this, x =>
+            MessengerInstance.Register<DiscordRelationshipAddedMessage>(this, m =>
             {
-                var friend = new BindableFriend(x.Friend);
-                _friendsService.Friends.TryAdd(friend.RawModel.Id, friend);
+                var friend = new BindableFriend(m.Friend);
 
                 _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    switch (x.Friend.Type)
+                    switch (m.Friend.Type)
                     {
                         case 1:
                             BindableCurrentFriends.Add(friend);
@@ -217,90 +236,60 @@ namespace Quarrel.ViewModels
                 });
             });
 
-            MessengerInstance.Register<GatewayRelationshipRemovedMessage>(this, x =>
+            MessengerInstance.Register<DiscordRelationshipRemovedMessage>(this, m =>
             {
-                BindableFriend friend;
-                _friendsService.Friends.TryRemove(x.Friend.Id, out friend);
-
                 _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    if (friend != null)
+                    switch (m.Friend.Type)
                     {
-                        switch (friend.Model.Type)
-                        {
-                            case 1:
-                                BindableCurrentFriends.Remove(friend);
-                                break;
-                            case 2:
-                                BindableBlockedUsers.Remove(friend);
-                                break;
-                            case 3:
-                            case 4:
-                                BindablePendingFriends.Remove(friend);
-                                break;
-                        }
+                        case 1:
+                            BindableCurrentFriends.RemoveAt(BindableCurrentFriends.IndexOf(x => x.Model.Id == m.Friend.Id));
+                            break;
+                        case 2:
+                            BindableBlockedUsers.RemoveAt(BindableBlockedUsers.IndexOf(x => x.Model.Id == m.Friend.Id));
+                            break;
+                        case 3:
+                        case 4:
+                            BindablePendingFriends.RemoveAt(BindablePendingFriends.IndexOf(x => x.Model.Id == m.Friend.Id));
+                            break;
                     }
                 });
             });
 
-            MessengerInstance.Register<GatewayRelationshipUpdatedMessage>(this, x =>
+            MessengerInstance.Register<DiscordRelationshipUpdatedMessage>(this, m =>
             {
-                BindableFriend friend;
-                _friendsService.Friends.TryGetValue(x.Friend.Id, out friend);
-
-                if (friend != null)
+                _dispatcherHelper.CheckBeginInvokeOnUi(() =>
                 {
-                    _dispatcherHelper.CheckBeginInvokeOnUi(() =>
+                    switch (m.Friend.Type)
                     {
-                        switch (friend.Model.Type)
-                        {
-                            case 1:
-                                BindableCurrentFriends.Remove(friend);
-                                break;
-                            case 2:
-                                BindableBlockedUsers.Remove(friend);
-                                break;
-                            case 3:
-                            case 4:
-                                BindablePendingFriends.Remove(friend);
-                                break;
-                        }
+                        case 1:
+                            BindableCurrentFriends.RemoveAt(BindableCurrentFriends.IndexOf(x => x.Model.Id == m.Friend.Id));
+                            break;
+                        case 2:
+                            BindableBlockedUsers.RemoveAt(BindableBlockedUsers.IndexOf(x => x.Model.Id == m.Friend.Id));
+                            break;
+                        case 3:
+                        case 4:
+                            BindablePendingFriends.RemoveAt(BindablePendingFriends.IndexOf(x => x.Model.Id == m.Friend.Id));
+                            break;
+                    }
 
-                        friend.Model = x.Friend;
-                        switch (x.Friend.Type)
-                        {
-                            case 1:
-                                BindableCurrentFriends.Add(friend);
-                                break;
-                            case 2:
-                                BindableBlockedUsers.Add(friend);
-                                break;
-                            case 3:
-                            case 4:
-                                BindablePendingFriends.Add(friend);
-                                break;
-                        }
-                    });
-                }
+                    BindableFriend friend = new BindableFriend(_friendsService.GetFriend(m.Friend.Id));
+                    switch (friend.Model.Type)
+                    {
+                        case 1:
+                            BindableCurrentFriends.Add(friend);
+                            break;
+                        case 2:
+                            BindableBlockedUsers.Add(friend);
+                            break;
+                        case 3:
+                        case 4:
+                            BindablePendingFriends.Add(friend);
+                            break;
+                    }
+                });
             });
-        }
-
-        /// <summary>
-        /// Logins in with cached token or opens login page.
-        /// </summary>
-        public async void Login()
-        {
-            string token =
-                (string)await _cacheService.Persistent.Roaming.TryGetValueAsync<object>(
-                    Constants.Cache.Keys.AccessToken);
-            if (string.IsNullOrEmpty(token))
-            {
-                _subFrameNavigationService.NavigateTo("LoginPage");
-            }
-            else
-            {
-                await _discordService.Login(token);
-            }
         }
 
         public VoiceState VoiceState

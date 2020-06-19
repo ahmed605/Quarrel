@@ -2,24 +2,24 @@
 
 using DiscordAPI.Models;
 
-namespace Quarrel.ViewModels.Messages.Gateway.Relationships
+namespace Quarrel.ViewModels.Messages.Services.Discord.Relationships
 {
     /// <summary>
-    /// A message indicating an updated relationship.
+    /// A message to mark a relationship being added.
     /// </summary>
-    public class GatewayRelationshipUpdatedMessage
+    public class DiscordRelationshipAddedMessage
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="GatewayRelationshipUpdatedMessage"/> class.
+        /// Initializes a new instance of the <see cref="DiscordRelationshipAddedMessage"/> class.
         /// </summary>
         /// <param name="friend">The relationship data.</param>
-        public GatewayRelationshipUpdatedMessage(Friend friend)
+        public DiscordRelationshipAddedMessage(Friend friend)
         {
             Friend = friend;
         }
 
         /// <summary>
-        /// Gets the updated friend.
+        /// Gets the new friend.
         /// </summary>
         public Friend Friend { get; }
     }

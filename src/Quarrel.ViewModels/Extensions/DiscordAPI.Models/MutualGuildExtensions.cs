@@ -17,14 +17,14 @@ namespace DiscordAPI.Models
         /// </summary>
         /// <param name="mg">The <see cref="MutualGuild"/>.</param>
         /// <returns>The <see cref="BindableGuild"/> for the <see cref="MutualGuild"/>.</returns>
-        public static BindableGuild Guild(this MutualGuild mg) => SimpleIoc.Default.GetInstance<IGuildsService>().GetGuild(mg.Id);
+        public static Guild Guild(this MutualGuild mg) => SimpleIoc.Default.GetInstance<IGuildsService>().GetGuild(mg.Id);
 
         /// <summary>
         /// Gets the guild's name of the <see cref="MutualGuild"/>.
         /// </summary>
         /// <param name="mg">The <see cref="MutualGuild"/>.</param>
         /// <returns>The name of the Guild for <paramref name="mg"/>.</returns>
-        public static string GetName(this MutualGuild mg) => Guild(mg)?.Model?.Name;
+        public static string GetName(this MutualGuild mg) => Guild(mg)?.Name;
 
         /// <summary>
         /// Gets the icon url of the <see cref="MutualGuild"/>.
@@ -33,7 +33,7 @@ namespace DiscordAPI.Models
         /// <returns>The icon url of the Guild for <paramref name="mg"/>.</returns>
         public static string GetIconUrl(this MutualGuild mg)
         {
-            return Guild(mg)?.IconUrl;
+            return Guild(mg)?.GetIconUrl();
         }
     }
 }

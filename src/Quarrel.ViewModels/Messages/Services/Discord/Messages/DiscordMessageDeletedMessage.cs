@@ -7,7 +7,6 @@ namespace Quarrel.ViewModels.Messages.Services.Discord.Messages
     /// </summary>
     public class DiscordMessageDeletedMessage
     {
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordMessageDeletedMessage"/> class.
         /// </summary>
