@@ -53,7 +53,7 @@ namespace Quarrel.ViewModels.SubPages
         private async void LoadContributors()
         {
             // Get Contributor list
-            var contributors = await _gitHubService.GetContributorsAsync(Constants.Store.GitHubRepoOwner, Constants.Store.GitHubRepoName);
+            var contributors = await _gitHubService.GetContributorsAsync(Constants.Meta.GitHubRepoOwner, Constants.Meta.GitHubRepoName);
 
             // Order Contributors by commit count
             contributors = contributors.OrderByDescending(x => x.CommitsCount);

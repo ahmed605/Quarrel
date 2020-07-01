@@ -351,6 +351,7 @@
     <Compile Include="Services\Abstract\ServiceWithAccessTokensBase.cs" />
     <Compile Include="Services\Analytics\AppCenterClientInfo.cs" />
     <Compile Include="Services\Analytics\AppCenterService.cs" />
+    <Compile Include="Services\Licensing\LicenseService.cs" />
     <Compile Include="Services\Navigation\SubFrameNavigationService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\Cache\CacheService.cs" />

@@ -94,9 +94,9 @@ namespace Quarrel.ViewModels.Helpers
         }
 
         /// <summary>
-        /// Application Id constants.
+        /// App meta data constants.
         /// </summary>
-        public static class Store
+        public static class Meta
         {
             /// <summary>
             /// The GitHub repository owner.
@@ -107,6 +107,47 @@ namespace Quarrel.ViewModels.Helpers
             /// The GitHub repository name.
             /// </summary>
             public const string GitHubRepoName = "Quarrel";
+
+            /// <summary>
+            /// Store related constants.
+            /// </summary>
+            public static class Store
+            {
+                /// <summary>
+                /// The Id of the Quarrel Premium IAP.
+                /// </summary>
+                public const string QuarrelPremiumIAPId = "Premium";
+
+                /// <summary>
+                /// The Id of the remove ads IAP.
+                /// </summary>
+                public const string RemoveAdsIAPId = "RemoveAds";
+
+                /// <summary>
+                /// The Id of the remove ads IAP.
+                /// </summary>
+                public const string RemoveAdsIAPId2 = "Remove Ads";
+
+                /// <summary>
+                /// The Id of the OMGTHXDonation IAP.
+                /// </summary>
+                public const string OMGTHXDonationIAPId = "OMGTHXDonation";
+
+                /// <summary>
+                /// The Id of the Polite Dontation IAP.
+                /// </summary>
+                public const string PoliteDontationIAPId = "Polite Dontation";
+
+                /// <summary>
+                /// The Id of the Significant Donation IAP.
+                /// </summary>
+                public const string SignificantDonationIAPId = "SignificantDonation";
+
+                /// <summary>
+                /// The Id of the Ridiculous Donation IAP.
+                /// </summary>
+                public const string RidiculousDonationIAPId = "RidiculousDonation";
+            }
         }
 
         /// <summary>
