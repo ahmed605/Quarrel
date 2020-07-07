@@ -7,6 +7,7 @@ using Quarrel.Navigation;
 using Quarrel.Services.Cache;
 using Quarrel.Services.Clipboard;
 using Quarrel.Services.DispatcherHelperEx;
+using Quarrel.Services.Licensing;
 using Quarrel.Services.Resources;
 using Quarrel.Services.Settings;
 using Quarrel.SubPages;
@@ -25,6 +26,7 @@ using Quarrel.ViewModels.Services.Discord.Presence;
 using Quarrel.ViewModels.Services.Discord.Rest;
 using Quarrel.ViewModels.Services.DispatcherHelper;
 using Quarrel.ViewModels.Services.Gateway;
+using Quarrel.ViewModels.Services.Licensing;
 using Quarrel.ViewModels.Services.Navigation;
 using Quarrel.ViewModels.Services.Resources;
 using Quarrel.ViewModels.Services.Settings;
@@ -81,6 +83,11 @@ namespace Quarrel.ViewModels
 #endif
             SimpleIoc.Default.Register<IAnalyticsService>(() => appCenterService);
 
+#if DEBUG
+            SimpleIoc.Default.Register<ILicenseService, FakeLicenseService>();
+#else
+            SimpleIoc.Default.Register<ILicenseService, LicenseService>();
+#endif
             SimpleIoc.Default.Register<ICacheService, CacheService>();
             SimpleIoc.Default.Register<IClipboardService, ClipboardService>();
             SimpleIoc.Default.Register<IResourceService, ResourceService>();
