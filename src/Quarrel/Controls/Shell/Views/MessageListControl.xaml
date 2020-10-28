@@ -45,17 +45,17 @@
         </Grid.RowDefinitions>
 
         <!--Message List-->
-        <ListView x:Name="MessageList" x:Load="True"
+        <ListBox x:Name="MessageList" x:Load="True"
                   ItemsSource="{x:Bind ViewModel.BindableMessages, Mode=OneWay}" Padding="0,0,0,16"
                   ItemTemplateSelector="{StaticResource MessageTemplateSelector}"
-                  SelectionMode="None" IsItemClickEnabled="False" ItemContainerStyle="{StaticResource MessageListItemStyle}" ShowsScrollingPlaceholders="False">
-            
-            <ListView.Header>
+                  ItemContainerStyle="{StaticResource MessageListItemStyle}">
+
+            <!--ListBox.Header-->
                 <!--Loading More messages from top-->
                 <ProgressBar Visibility="{x:Bind ViewModel.OldItemsLoading, Mode=OneWay}" IsIndeterminate="True"/>
-            </ListView.Header>
-            
-            <ListView.ItemsPanel>
+            <!--/ListBox.Header-->
+
+            <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <ItemsStackPanel Loaded="ItemsStackPanel_Loaded" ItemsUpdatingScrollMode="KeepLastItemInView">
                         <ItemsStackPanel.ChildrenTransitions>
@@ -63,12 +63,12 @@
                         </ItemsStackPanel.ChildrenTransitions>
                     </ItemsStackPanel>
                 </ItemsPanelTemplate>
-            </ListView.ItemsPanel>
+            </ListBox.ItemsPanel>
 
             <!--<ListView.Footer>
                 <ProgressBar Visibility="{x:Bind ViewModel.NewItemsLoading, Mode=OneWay}" IsIndeterminate="True"/>
             </ListView.Footer>-->
-        </ListView>
+        </ListBox>
 
         <Rectangle Visibility="{x:Bind baseconvert:NotNullToVisibilityConverter.Convert(ViewModel.CurrentChannel), Mode=OneWay, FallbackValue=Collapsed}"
                    IsHitTestVisible="False" Height="12" Opacity="{StaticResource ShadowOpacity}" VerticalAlignment="Bottom">

@@ -54,7 +54,7 @@ namespace Microsoft.Toolkit.Extensions
         public static string ToTypeString(this Type type)
         {
             // Local function to create the formatted string for a given type
-            static string FormatDisplayString(Type type)
+            string FormatDisplayString(Type type)
             {
                 // Primitive types use the keyword name
                 if (BuiltInTypesMap.TryGetValue(type, out string? typeName))
